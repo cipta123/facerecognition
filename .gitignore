@@ -1,0 +1,55 @@
+# Environment
+.env
+.env.local
+
+# Output (exclude semua isi output folder)
+output/photos/
+output/error.txt
+output/progress.json
+output/*.jpg
+output/*.png
+output/*.jpeg
+
+# Face Recognition Models (besar, auto-download)
+models/
+*.onnx
+~/.insightface/
+
+# SSL Certificates
+certs/
+*.pem
+*.key
+*.crt
+
+# Logs
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+test_recognition.py
+
