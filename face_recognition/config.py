@@ -27,7 +27,7 @@ RETINAFACE_CONFIDENCE_THRESHOLD = 0.7  # Naikkan dari 0.5 untuk deteksi lebih ak
 RETINAFACE_NMS_THRESHOLD = 0.4
 
 # Matching Settings
-COSINE_SIMILARITY_THRESHOLD = 0.75  # Threshold untuk matching (ArcFace optimal: 0.70-0.75)
+COSINE_SIMILARITY_THRESHOLD = 0.65  # Threshold untuk matching (ArcFace optimal: 0.70-0.75)
 ENABLE_GAP_VALIDATION = False  # Nonaktifkan gap validation (threshold sudah cukup, voting mechanism handle konsistensi)
 MIN_CONFIDENCE_GAP = 0.1  # Gap minimum (tidak digunakan jika ENABLE_GAP_VALIDATION = False)
 TOP_K_MATCHES = 5  # Return top 5 matches

@@ -39,6 +39,7 @@ CORS(app)
 encoder = None
 matcher = None
 db = None
+face_detector = None  # Cache untuk face detector
 
 def init_components():
     """Initialize encoder, matcher, dan database."""
@@ -50,11 +51,92 @@ def init_components():
         matcher = FaceMatcher(db)
         print("Components initialized!")
 
+def get_face_detector():
+    """Get cached face detector instance."""
+    global face_detector
+    if face_detector is None:
+        from face_recognition.preprocessor import FacePreprocessor
+        print("Initializing face detector for detection endpoint...")
+        face_detector = FacePreprocessor()
+        print("Face detector initialized!")
+    return face_detector
+
 @app.route('/')
 def index():
     """Serve web interface."""
     template = load_html_template()
     return render_template_string(template)
+
+@app.route('/detect-face', methods=['POST'])
+def detect_face():
+    """Detect face in image (for visual feedback) - OPTIMIZED for speed."""
+    try:
+        # Get cached detector (much faster than creating new instance)
+        detector = get_face_detector()
+        
+        # Get image from request
+        if 'image' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No image provided'
+            }), 400
+        
+        file = request.files['image']
+        image_bytes = file.read()
+        image = Image.open(io.BytesIO(image_bytes))
+        
+        # OPTIMIZATION: Resize image untuk detection lebih cepat
+        # Detection tidak perlu full resolution, cukup 320x240 atau max 640px
+        max_size = 640
+        if image.width > max_size or image.height > max_size:
+            ratio = min(max_size / image.width, max_size / image.height)
+            new_width = int(image.width * ratio)
+            new_height = int(image.height * ratio)
+            image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        
+        # Convert to numpy array (BGR for OpenCV)
+        image_array = np.array(image.convert('RGB'))
+        image_bgr = image_array[:, :, ::-1]  # RGB to BGR
+        
+        # Use cached detector to detect face
+        face_data = detector.detect_face(image_bgr)
+        
+        if face_data is None:
+            return jsonify({
+                'success': False,
+                'face': None
+            })
+        
+        # Scale bbox back to original size if image was resized
+        bbox = face_data['bbox'].copy()
+        if image.width != image_array.shape[1] or image.height != image_array.shape[0]:
+            # Get original size from request if available
+            original_width = request.form.get('width', type=int)
+            original_height = request.form.get('height', type=int)
+            if original_width and original_height:
+                scale_x = original_width / image.width
+                scale_y = original_height / image.height
+                bbox[0] = int(bbox[0] * scale_x)
+                bbox[1] = int(bbox[1] * scale_y)
+                bbox[2] = int(bbox[2] * scale_x)
+                bbox[3] = int(bbox[3] * scale_y)
+        
+        # Return bbox in format [x1, y1, x2, y2]
+        return jsonify({
+            'success': True,
+            'face': {
+                'bbox': bbox.tolist(),
+                'confidence': float(face_data['det_score'])
+            }
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/recognize', methods=['POST'])
 def recognize():

@@ -16,104 +16,326 @@ HTML_TEMPLATE = """
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Face Recognition - Ujian</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            padding: 0;
+            margin: 0;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 50px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 20px;
-        }
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 800px;
-            width: 100%;
-            padding: 40px;
-        }
-        h1 {
             text-align: center;
-            color: #333;
-            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 5px;
         }
         .camera-section {
-            margin-bottom: 30px;
+            padding: 20px;
             position: relative;
+        }
+        .video-container {
+            position: relative;
+            width: 100%;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
         }
         #video {
             width: 100%;
-            max-width: 640px;
-            border-radius: 10px;
-            background: #000;
             display: block;
-            margin: 0 auto 20px;
+            aspect-ratio: 4/3;
+            object-fit: cover;
         }
-        .controls {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
+        .face-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            border-radius: 20px;
         }
-        button {
-            padding: 12px 24px;
-            font-size: 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
+        .face-box {
+            position: absolute;
+            border: 3px solid #48bb78;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(72, 187, 120, 0.5);
+            background: rgba(72, 187, 120, 0.1);
+            transition: all 0.3s ease;
+            animation: facePulse 2s infinite;
+        }
+        .face-box.detecting {
+            border-color: #667eea;
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.7);
+            background: rgba(102, 126, 234, 0.15);
+            animation: faceDetecting 1s infinite;
+        }
+        @keyframes facePulse {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(72, 187, 120, 0.5);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(72, 187, 120, 0.8);
+            }
+        }
+        @keyframes faceDetecting {
+            0%, 100% { 
+                box-shadow: 0 0 30px rgba(102, 126, 234, 0.7);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(102, 126, 234, 1);
+                transform: scale(1.02);
+            }
+        }
+        .progress-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 0 0 20px 20px;
+            overflow: hidden;
+            display: none;
+        }
+        .progress-overlay.active {
+            display: block;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: progressShine 1.5s infinite;
+        }
+        @keyframes progressShine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        .face-label {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            background: rgba(72, 187, 120, 0.95);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
             font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
-        .btn-capture {
-            background: #667eea;
+        .face-label.detecting {
+            background: rgba(102, 126, 234, 0.95);
+        }
+        .scanning-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(102, 126, 234, 0.95);
             color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: none;
+            animation: pulse 1.5s infinite;
+            z-index: 10;
+            backdrop-filter: blur(10px);
         }
-        .btn-capture:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
+        .scanning-indicator.active {
+            display: block;
         }
-        .btn-upload {
-            background: #48bb78;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(0.98); }
+        }
+        .status-info {
+            text-align: center;
+            padding: 12px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 500;
+        }
+        .controls-frame {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .control-group {
+            margin-bottom: 15px;
+        }
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+        .control-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-frame {
+            position: relative;
+            width: 100%;
+        }
+        .btn-main {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            background: white;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-align: left;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-main:active {
+            transform: scale(0.98);
+        }
+        .btn-main .icon {
+            font-size: 20px;
+            margin-right: 12px;
+        }
+        .btn-main .text {
+            flex: 1;
+        }
+        .btn-main .arrow {
+            font-size: 18px;
+            color: #999;
+            transition: transform 0.3s;
+        }
+        .btn-main.active .arrow {
+            transform: rotate(180deg);
+        }
+        .btn-main.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            border-color: transparent;
         }
-        .btn-upload:hover {
-            background: #38a169;
-            transform: translateY(-2px);
+        .btn-main.primary .arrow {
+            color: rgba(255,255,255,0.8);
         }
-        .btn-switch {
-            background: #ed8936;
+        .btn-main.success {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
             color: white;
+            border-color: transparent;
         }
-        .btn-switch:hover {
-            background: #dd6b20;
-            transform: translateY(-2px);
+        .btn-main.success .arrow {
+            color: rgba(255,255,255,0.8);
+        }
+        .btn-main.warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+            border-color: transparent;
+        }
+        .btn-main.warning .arrow {
+            color: rgba(255,255,255,0.8);
+        }
+        .dropdown-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 8px;
+            border-radius: 12px;
+            background: #f8f9fa;
+        }
+        .dropdown-menu.active {
+            max-height: 500px;
+        }
+        .dropdown-item {
+            padding: 14px 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            font-size: 15px;
+            color: #333;
+        }
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+        .dropdown-item:active {
+            background: #e9ecef;
+        }
+        .dropdown-item .icon {
+            font-size: 18px;
+            margin-right: 12px;
+            width: 24px;
+            text-align: center;
         }
         .hidden {
             display: none;
         }
         #fileInput {
             display: none;
-        }
-        .upload-label {
-            display: inline-block;
-            padding: 12px 24px;
-            background: #48bb78;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .upload-label:hover {
-            background: #38a169;
         }
         .loading {
             text-align: center;
@@ -123,42 +345,18 @@ HTML_TEMPLATE = """
         .loading.active {
             display: block;
         }
-        .btn-auto {
-            background: #9f7aea;
-            color: white;
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
         }
-        .btn-auto:hover {
-            background: #805ad5;
-            transform: translateY(-2px);
-        }
-        .btn-auto.active {
-            background: #48bb78;
-        }
-        .scanning-indicator {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(102, 126, 234, 0.9);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            display: none;
-            animation: pulse 1.5s infinite;
-        }
-        .scanning-indicator.active {
-            display: block;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-        .status-info {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #666;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
         
         /* POPUP MODAL STYLES */
@@ -174,6 +372,7 @@ HTML_TEMPLATE = """
             align-items: center;
             z-index: 1000;
             animation: fadeIn 0.3s ease;
+            backdrop-filter: blur(5px);
         }
         .modal-overlay.active {
             display: flex;
@@ -184,29 +383,30 @@ HTML_TEMPLATE = """
         }
         .modal-content {
             background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 500px;
-            width: 90%;
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 90%;
+            width: 400px;
             text-align: center;
             position: relative;
-            animation: slideUp 0.3s ease;
+            animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+            margin: 20px;
         }
         @keyframes slideUp {
             from { 
-                transform: translateY(50px);
+                transform: translateY(50px) scale(0.95);
                 opacity: 0;
             }
             to { 
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
                 opacity: 1;
             }
         }
         .modal-close {
             position: absolute;
             top: 15px;
-            right: 20px;
+            right: 15px;
             font-size: 28px;
             cursor: pointer;
             color: #999;
@@ -214,13 +414,21 @@ HTML_TEMPLATE = """
             background: none;
             border: none;
             padding: 5px 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
-        .modal-close:hover {
+        .modal-close:active {
+            background: #f0f0f0;
             color: #333;
         }
         .modal-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
+            font-size: 70px;
+            margin-bottom: 15px;
+            line-height: 1;
         }
         .modal-icon.success {
             color: #48bb78;
@@ -229,78 +437,149 @@ HTML_TEMPLATE = """
             color: #f56565;
         }
         .modal-title {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 22px;
+            font-weight: 700;
             margin-bottom: 15px;
             color: #333;
         }
         .modal-nim {
-            font-size: 36px;
-            font-weight: bold;
+            font-size: 32px;
+            font-weight: 700;
             color: #667eea;
             margin: 20px 0;
             padding: 15px;
-            background: #f0f4ff;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e8edff 100%);
+            border-radius: 12px;
         }
         .modal-confidence {
-            font-size: 18px;
+            font-size: 16px;
             color: #666;
             margin-bottom: 25px;
+            font-weight: 500;
         }
         .modal-btn {
-            padding: 15px 40px;
-            font-size: 18px;
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .modal-btn:active {
+            transform: scale(0.98);
         }
         .modal-btn.success {
-            background: #48bb78;
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
             color: white;
-        }
-        .modal-btn.success:hover {
-            background: #38a169;
-            transform: translateY(-2px);
         }
         .modal-btn.error {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #5568d3 100%);
             color: white;
-        }
-        .modal-btn.error:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
         }
         .modal-error-msg {
             color: #666;
-            font-size: 16px;
+            font-size: 15px;
             margin-bottom: 20px;
-            line-height: 1.5;
+            line-height: 1.6;
+        }
+        @media (max-width: 480px) {
+            .app-container {
+                max-width: 100%;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .modal-content {
+                padding: 25px;
+            }
+            .modal-nim {
+                font-size: 28px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔐 Face Recognition - Verifikasi Ujian</h1>
+    <div class="app-container">
+        <div class="header">
+            <h1>🔐 Face Recognition</h1>
+            <div class="subtitle">Verifikasi Ujian</div>
+        </div>
         
         <div class="camera-section">
             <div class="scanning-indicator" id="scanningIndicator">🔍 Scanning...</div>
-            <video id="video" autoplay playsinline></video>
+            <div class="video-container">
+                <video id="video" autoplay playsinline></video>
+                <canvas class="face-overlay" id="faceOverlay"></canvas>
+                <div class="progress-overlay" id="progressOverlay">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
             <canvas id="canvas" class="hidden"></canvas>
             
-            <div class="controls">
-                <button class="btn-auto" onclick="toggleAutoScan()" id="autoScanBtn">▶️ Auto Scan</button>
-                <button class="btn-capture" onclick="capturePhoto()">📷 Ambil Foto</button>
-                <button class="btn-switch" onclick="switchCamera()" id="switchBtn">🔄 Kamera Belakang</button>
-                <label for="fileInput" class="upload-label">📁 Upload Foto</label>
-                <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
-            </div>
             <div class="status-info" id="statusInfo">Siap untuk scanning...</div>
+            
+            <div class="controls-frame">
+                <div class="control-group">
+                    <div class="control-label">Mode Scanning</div>
+                    <div class="btn-frame">
+                        <button class="btn-main primary" id="scanModeBtn" onclick="toggleDropdown('scanMode')">
+                            <span class="icon">📷</span>
+                            <span class="text" id="scanModeText">Pilih Mode</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="dropdown-menu" id="scanModeMenu">
+                            <div class="dropdown-item" onclick="selectScanMode('auto')">
+                                <span class="icon">▶️</span>
+                                <span>Auto Scan (Otomatis)</span>
+                            </div>
+                            <div class="dropdown-item" onclick="selectScanMode('manual')">
+                                <span class="icon">📸</span>
+                                <span>Ambil Foto (Manual)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">Kamera</div>
+                    <div class="btn-frame">
+                        <button class="btn-main" id="cameraBtn" onclick="toggleDropdown('camera')">
+                            <span class="icon">📹</span>
+                            <span class="text" id="cameraText">Kamera Depan</span>
+                            <span class="arrow">▼</span>
+                        </button>
+                        <div class="dropdown-menu" id="cameraMenu">
+                            <div class="dropdown-item" onclick="selectCamera('front')">
+                                <span class="icon">📱</span>
+                                <span>Kamera Depan</span>
+                            </div>
+                            <div class="dropdown-item" onclick="selectCamera('back')">
+                                <span class="icon">📷</span>
+                                <span>Kamera Belakang</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <div class="control-label">Upload Foto</div>
+                    <div class="btn-frame">
+                        <button class="btn-main success" onclick="document.getElementById('fileInput').click()">
+                            <span class="icon">📁</span>
+                            <span class="text">Pilih File dari Galeri</span>
+                            <span class="arrow">→</span>
+                        </button>
+                        <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)" class="hidden">
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
             <p>Memproses foto...</p>
         </div>
     </div>
@@ -326,12 +605,106 @@ HTML_TEMPLATE = """
         let lastScanTime = 0;
         const SCAN_INTERVAL = 2500; // Scan setiap 2.5 detik
         const MIN_SCAN_INTERVAL = 2000; // Minimum interval 2 detik
+        let currentScanMode = null; // 'auto' or 'manual'
         
         // Voting mechanism untuk hasil yang lebih stabil
         let recognitionHistory = [];
         const MAX_HISTORY = 5; // Simpan 5 hasil terakhir
         let stableResult = null; // Hasil yang sudah stabil
         let modalShown = false; // Track apakah modal sedang ditampilkan
+        let activeDropdown = null; // Track dropdown yang sedang aktif
+        let faceDetectionInterval = null; // Interval untuk face detection
+        let faceDetectionLoop = null; // RequestAnimationFrame loop
+        let currentFaceBox = null; // Current detected face box
+        let progressAnimation = null; // Progress bar animation
+        
+        // Dropdown functions
+        function toggleDropdown(type) {
+            const menuId = type === 'scanMode' ? 'scanModeMenu' : 'cameraMenu';
+            const btnId = type === 'scanMode' ? 'scanModeBtn' : 'cameraBtn';
+            const menu = document.getElementById(menuId);
+            const btn = document.getElementById(btnId);
+            
+            // Close other dropdowns
+            if (activeDropdown && activeDropdown !== menu) {
+                activeDropdown.classList.remove('active');
+                const otherBtn = activeDropdown.previousElementSibling;
+                if (otherBtn) otherBtn.classList.remove('active');
+            }
+            
+            // Toggle current dropdown
+            if (menu.classList.contains('active')) {
+                menu.classList.remove('active');
+                btn.classList.remove('active');
+                activeDropdown = null;
+            } else {
+                menu.classList.add('active');
+                btn.classList.add('active');
+                activeDropdown = menu;
+            }
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (activeDropdown && !activeDropdown.contains(e.target) && 
+                !activeDropdown.previousElementSibling.contains(e.target)) {
+                activeDropdown.classList.remove('active');
+                activeDropdown.previousElementSibling.classList.remove('active');
+                activeDropdown = null;
+            }
+        });
+        
+        // Select scan mode
+        function selectScanMode(mode) {
+            const btn = document.getElementById('scanModeBtn');
+            const text = document.getElementById('scanModeText');
+            const menu = document.getElementById('scanModeMenu');
+            
+            currentScanMode = mode;
+            
+            if (mode === 'auto') {
+                text.textContent = 'Auto Scan (Otomatis)';
+                btn.querySelector('.icon').textContent = '▶️';
+                if (!isAutoScanning) {
+                    toggleAutoScan();
+                }
+            } else {
+                text.textContent = 'Ambil Foto (Manual)';
+                btn.querySelector('.icon').textContent = '📸';
+                if (isAutoScanning) {
+                    toggleAutoScan();
+                }
+            }
+            
+            // Close dropdown
+            menu.classList.remove('active');
+            btn.classList.remove('active');
+            activeDropdown = null;
+        }
+        
+        // Select camera
+        function selectCamera(camera) {
+            const btn = document.getElementById('cameraBtn');
+            const text = document.getElementById('cameraText');
+            const menu = document.getElementById('cameraMenu');
+            const facingMode = camera === 'front' ? 'user' : 'environment';
+            
+            if (camera === 'front') {
+                text.textContent = 'Kamera Depan';
+                btn.querySelector('.icon').textContent = '📱';
+            } else {
+                text.textContent = 'Kamera Belakang';
+                btn.querySelector('.icon').textContent = '📷';
+            }
+            
+            // Switch camera
+            startCamera(facingMode);
+            
+            // Close dropdown
+            menu.classList.remove('active');
+            btn.classList.remove('active');
+            activeDropdown = null;
+        }
         
         // Start camera
         async function startCamera(facingMode = 'user') {
@@ -377,15 +750,31 @@ HTML_TEMPLATE = """
                 video.srcObject = stream;
                 currentFacingMode = facingMode;
                 
-                // Update button text
-                const switchBtn = document.getElementById('switchBtn');
-                if (switchBtn) {
-                    switchBtn.textContent = facingMode === 'user' ? '🔄 Kamera Belakang' : '🔄 Kamera Depan';
+                // Update camera button text
+                const cameraText = document.getElementById('cameraText');
+                const cameraIcon = document.getElementById('cameraBtn').querySelector('.icon');
+                if (facingMode === 'user') {
+                    cameraText.textContent = 'Kamera Depan';
+                    cameraIcon.textContent = '📱';
+                } else {
+                    cameraText.textContent = 'Kamera Belakang';
+                    cameraIcon.textContent = '📷';
                 }
                 
                 // Wait for video to be ready
                 video.onloadedmetadata = () => {
                     console.log('Video ready:', video.videoWidth, 'x', video.videoHeight, 'facingMode:', facingMode);
+                    const statusInfo = document.getElementById('statusInfo');
+                    statusInfo.textContent = '✅ Kamera siap - Pilih mode scanning';
+                    statusInfo.style.background = 'rgba(72, 187, 120, 0.1)';
+                    statusInfo.style.color = '#48bb78';
+                    
+                    // Update overlay size
+                    updateOverlaySize();
+                    
+                    // Start face detection
+                    startFaceDetection();
+                    
                     // Start auto scan jika sudah enabled sebelumnya
                     if (isAutoScanning) {
                         startAutoScan();
@@ -409,27 +798,29 @@ HTML_TEMPLATE = """
             }
         }
         
-        // Switch camera
-        function switchCamera() {
-            const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-            console.log('Switching camera from', currentFacingMode, 'to', newFacingMode);
-            startCamera(newFacingMode);
-        }
-        
-        // Capture photo
+        // Capture photo (manual mode)
         function capturePhoto() {
+            if (isAutoScanning) {
+                // If auto scan is active, stop it first
+                toggleAutoScan();
+            }
+            
             console.log('Capture photo clicked');
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             
             // Check if video is ready
             if (!video || !video.videoWidth || !video.videoHeight) {
-                console.error('Video not ready:', {
-                    video: !!video,
-                    width: video?.videoWidth,
-                    height: video?.videoHeight
-                });
-                alert('Video belum siap. Tunggu sebentar dan coba lagi.');
+                console.error('Video not ready');
+                const statusInfo = document.getElementById('statusInfo');
+                statusInfo.textContent = '⚠️ Video belum siap. Tunggu sebentar...';
+                statusInfo.style.background = 'rgba(237, 137, 54, 0.1)';
+                statusInfo.style.color = '#ed8936';
+                setTimeout(() => {
+                    statusInfo.textContent = 'Siap untuk scanning...';
+                    statusInfo.style.background = 'rgba(102, 126, 234, 0.1)';
+                    statusInfo.style.color = '#667eea';
+                }, 2000);
                 return;
             }
             
@@ -443,15 +834,21 @@ HTML_TEMPLATE = """
                 canvas.toBlob(blob => {
                     if (blob) {
                         console.log('Blob created, size:', blob.size, 'bytes');
-                        sendImage(blob);
+                        sendImage(blob, false); // false = manual mode
                     } else {
                         console.error('Failed to create blob');
-                        alert('Gagal mengambil foto. Coba lagi.');
+                        const statusInfo = document.getElementById('statusInfo');
+                        statusInfo.textContent = '❌ Gagal mengambil foto. Coba lagi.';
+                        statusInfo.style.background = 'rgba(245, 101, 101, 0.1)';
+                        statusInfo.style.color = '#f56565';
                     }
                 }, 'image/jpeg', 0.9);
             } catch (err) {
                 console.error('Error capturing photo:', err);
-                alert('Error: ' + err.message);
+                const statusInfo = document.getElementById('statusInfo');
+                statusInfo.textContent = '❌ Error: ' + err.message;
+                statusInfo.style.background = 'rgba(245, 101, 101, 0.1)';
+                statusInfo.style.color = '#f56565';
             }
         }
         
@@ -459,25 +856,27 @@ HTML_TEMPLATE = """
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
-                sendImage(file);
+                sendImage(file, false); // false = manual mode
             }
         }
         
         // Toggle auto scan
         function toggleAutoScan() {
             isAutoScanning = !isAutoScanning;
-            const btn = document.getElementById('autoScanBtn');
             const statusInfo = document.getElementById('statusInfo');
+            const text = document.getElementById('scanModeText');
             
             if (isAutoScanning) {
-                btn.textContent = '⏸️ Stop Auto Scan';
-                btn.classList.add('active');
-                statusInfo.textContent = 'Auto scan aktif - Scanning setiap ' + (SCAN_INTERVAL/1000) + ' detik...';
+                text.textContent = 'Auto Scan (Aktif)';
+                statusInfo.textContent = '🟢 Auto scan aktif - Scanning setiap ' + (SCAN_INTERVAL/1000) + ' detik...';
+                statusInfo.style.background = 'rgba(72, 187, 120, 0.1)';
+                statusInfo.style.color = '#48bb78';
                 startAutoScan();
             } else {
-                btn.textContent = '▶️ Auto Scan';
-                btn.classList.remove('active');
+                text.textContent = 'Auto Scan (Otomatis)';
                 statusInfo.textContent = 'Auto scan dihentikan';
+                statusInfo.style.background = 'rgba(102, 126, 234, 0.1)';
+                statusInfo.style.color = '#667eea';
                 stopAutoScan();
             }
         }
@@ -505,6 +904,7 @@ HTML_TEMPLATE = """
             }
             const indicator = document.getElementById('scanningIndicator');
             indicator.classList.remove('active');
+            // Face detection tetap berjalan untuk visual feedback
         }
         
         // Perform auto scan
@@ -512,8 +912,8 @@ HTML_TEMPLATE = """
             const video = document.getElementById('video');
             const canvas = document.getElementById('canvas');
             
-            // Skip jika masih processing atau video belum ready
-            if (isProcessing || !video || !video.videoWidth || !video.videoHeight) {
+            // Skip jika masih processing, modal tampil, atau video belum ready
+            if (isProcessing || modalShown || !video || !video.videoWidth || !video.videoHeight) {
                 return;
             }
             
@@ -629,7 +1029,15 @@ HTML_TEMPLATE = """
             stableResult = null;
             
             const statusInfo = document.getElementById('statusInfo');
-            statusInfo.textContent = 'Siap untuk scanning...';
+            if (isAutoScanning) {
+                statusInfo.textContent = '🟢 Auto scan aktif - Scanning setiap ' + (SCAN_INTERVAL/1000) + ' detik...';
+                statusInfo.style.background = 'rgba(72, 187, 120, 0.1)';
+                statusInfo.style.color = '#48bb78';
+            } else {
+                statusInfo.textContent = 'Siap untuk scanning...';
+                statusInfo.style.background = 'rgba(102, 126, 234, 0.1)';
+                statusInfo.style.color = '#667eea';
+            }
             
             // Resume auto scan jika sebelumnya aktif
             if (isAutoScanning) {
@@ -665,6 +1073,41 @@ HTML_TEMPLATE = """
             const loading = document.getElementById('loading');
             const scanningIndicator = document.getElementById('scanningIndicator');
             const statusInfo = document.getElementById('statusInfo');
+            const overlay = document.getElementById('faceOverlay');
+            
+            // Update face box to detecting state
+            if (currentFaceBox) {
+                const ctx = overlay.getContext('2d');
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
+                
+                // Draw detecting box
+                ctx.strokeStyle = '#667eea';
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = 'rgba(102, 126, 234, 0.7)';
+                ctx.beginPath();
+                ctx.roundRect(currentFaceBox.x, currentFaceBox.y, currentFaceBox.width, currentFaceBox.height, 12);
+                ctx.stroke();
+                
+                // Draw detecting label
+                ctx.fillStyle = 'rgba(102, 126, 234, 0.95)';
+                ctx.shadowBlur = 0;
+                const labelText = '🔍 Mencari di Database...';
+                ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+                const labelWidth = ctx.measureText(labelText).width + 24;
+                const labelHeight = 25;
+                ctx.beginPath();
+                ctx.roundRect(currentFaceBox.x, currentFaceBox.y - labelHeight, labelWidth, labelHeight, 12);
+                ctx.fill();
+                
+                ctx.fillStyle = 'white';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(labelText, currentFaceBox.x + 12, currentFaceBox.y - labelHeight / 2);
+            }
+            
+            // Start progress animation
+            startProgressAnimation();
             
             if (isAutoScan) {
                 scanningIndicator.classList.add('active');
@@ -697,10 +1140,18 @@ HTML_TEMPLATE = """
                 
                 const data = await response.json();
                 
+                // Stop progress animation
+                stopProgressAnimation();
+                
                 if (isAutoScan) {
                     scanningIndicator.classList.remove('active');
                 } else {
                     loading.classList.remove('active');
+                }
+                
+                // Resume face detection
+                if (!faceDetectionInterval) {
+                    startFaceDetection();
                 }
                 
                 if (data.success) {
@@ -722,6 +1173,9 @@ HTML_TEMPLATE = """
                     // Manual scan: langsung tampilkan popup
                     if (!isAutoScan) {
                         showModal(true, data.nim, data.confidence);
+                        statusInfo.textContent = '✅ Foto berhasil diproses';
+                        statusInfo.style.background = 'rgba(72, 187, 120, 0.1)';
+                        statusInfo.style.color = '#48bb78';
                     } 
                     // Auto scan: tunggu hasil stabil
                     else if (stable) {
@@ -730,35 +1184,301 @@ HTML_TEMPLATE = """
                     } else {
                         // Still building confidence
                         statusInfo.textContent = `🔍 Mengenali wajah... (${recognitionHistory.length}/${MAX_HISTORY})`;
+                        statusInfo.style.background = 'rgba(102, 126, 234, 0.1)';
+                        statusInfo.style.color = '#667eea';
                     }
                 } else {
                     // Error atau tidak ada match
                     if (!isAutoScan) {
                         showModal(false, '', 0, data.error || 'Tidak dapat mengenali wajah');
+                        statusInfo.textContent = '❌ ' + (data.error || 'Wajah tidak dikenali');
+                        statusInfo.style.background = 'rgba(245, 101, 101, 0.1)';
+                        statusInfo.style.color = '#f56565';
                     } else {
                         statusInfo.textContent = '❌ ' + (data.error || 'Wajah tidak dikenali');
+                        statusInfo.style.background = 'rgba(245, 101, 101, 0.1)';
+                        statusInfo.style.color = '#f56565';
                     }
                 }
             } catch (error) {
                 console.error('Error sending image:', error);
+                
+                // Stop progress animation
+                stopProgressAnimation();
+                
+                // Resume face detection
+                if (!faceDetectionInterval) {
+                    startFaceDetection();
+                }
+                
                 if (isAutoScan) {
                     scanningIndicator.classList.remove('active');
                     statusInfo.textContent = '⚠️ Error: ' + error.message;
+                    statusInfo.style.background = 'rgba(237, 137, 54, 0.1)';
+                    statusInfo.style.color = '#ed8936';
                 } else {
                     loading.classList.remove('active');
                     showModal(false, '', 0, 'Terjadi kesalahan: ' + error.message);
+                    statusInfo.textContent = '❌ Error: ' + error.message;
+                    statusInfo.style.background = 'rgba(245, 101, 101, 0.1)';
+                    statusInfo.style.color = '#f56565';
                 }
             } finally {
                 isProcessing = false;
             }
         }
         
+        // Face detection functions - OPTIMIZED for speed
+        let isDetecting = false; // Prevent concurrent detection requests
+        
+        async function detectFaceInFrame() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const overlay = document.getElementById('faceOverlay');
+            
+            // Skip if video not ready, still processing, or already detecting
+            if (!video || !video.videoWidth || !video.videoHeight || isDetecting) {
+                return;
+            }
+            
+            isDetecting = true;
+            
+            try {
+                // OPTIMIZATION: Resize canvas untuk detection lebih cepat
+                // Detection tidak perlu full resolution, cukup 320x240 atau max 640px
+                const maxSize = 640;
+                let canvasWidth = video.videoWidth;
+                let canvasHeight = video.videoHeight;
+                let scale = 1;
+                
+                if (canvasWidth > maxSize || canvasHeight > maxSize) {
+                    scale = Math.min(maxSize / canvasWidth, maxSize / canvasHeight);
+                    canvasWidth = Math.floor(canvasWidth * scale);
+                    canvasHeight = Math.floor(canvasHeight * scale);
+                }
+                
+                // Draw video frame to canvas (resized)
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvasWidth;
+                canvas.height = canvasHeight;
+                ctx.drawImage(video, 0, 0, canvasWidth, canvasHeight);
+                
+                // Convert to blob with lower quality untuk lebih cepat
+                canvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        isDetecting = false;
+                        return;
+                    }
+                    
+                    try {
+                        const formData = new FormData();
+                        formData.append('image', blob, 'frame.jpg');
+                        // Send original dimensions untuk scale bbox
+                        formData.append('width', video.videoWidth);
+                        formData.append('height', video.videoHeight);
+                        
+                        const response = await fetch('/detect-face', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.face) {
+                                drawFaceBox(data.face, video, overlay);
+                            } else {
+                                clearFaceBox(overlay);
+                            }
+                        } else {
+                            clearFaceBox(overlay);
+                        }
+                    } catch (err) {
+                        // Silently fail - don't spam console
+                        clearFaceBox(overlay);
+                    } finally {
+                        isDetecting = false;
+                    }
+                }, 'image/jpeg', 0.7); // Lower quality (0.7) untuk lebih cepat
+            } catch (err) {
+                clearFaceBox(overlay);
+                isDetecting = false;
+            }
+        }
+        
+        function drawFaceBox(faceData, video, overlay) {
+            const ctx = overlay.getContext('2d');
+            const videoRect = video.getBoundingClientRect();
+            const scaleX = overlay.width / video.videoWidth;
+            const scaleY = overlay.height / video.videoHeight;
+            
+            // Clear previous drawing
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+            
+            // Calculate box position
+            const x = faceData.bbox[0] * scaleX;
+            const y = faceData.bbox[1] * scaleY;
+            const width = (faceData.bbox[2] - faceData.bbox[0]) * scaleX;
+            const height = (faceData.bbox[3] - faceData.bbox[1]) * scaleY;
+            
+            // Draw face box
+            ctx.strokeStyle = '#48bb78';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(72, 187, 120, 0.5)';
+            ctx.beginPath();
+            ctx.roundRect(x, y, width, height, 12);
+            ctx.stroke();
+            
+            // Draw label
+            ctx.fillStyle = 'rgba(72, 187, 120, 0.95)';
+            ctx.shadowBlur = 0;
+            const labelText = 'Wajah Terdeteksi';
+            ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            const labelWidth = ctx.measureText(labelText).width + 24;
+            const labelHeight = 25;
+            ctx.beginPath();
+            ctx.roundRect(x, y - labelHeight, labelWidth, labelHeight, 12);
+            ctx.fill();
+            
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, x + 12, y - labelHeight / 2);
+            
+            currentFaceBox = { x, y, width, height };
+        }
+        
+        function clearFaceBox(overlay) {
+            const ctx = overlay.getContext('2d');
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+            currentFaceBox = null;
+        }
+        
+        function startFaceDetection() {
+            // Stop existing detection
+            stopFaceDetection();
+            
+            let lastDetectionTime = 0;
+            const DETECTION_INTERVAL = 200; // 200ms = 5 FPS untuk detection (lebih cepat)
+            
+            // Use requestAnimationFrame untuk lebih smooth
+            function detectLoop() {
+                const now = Date.now();
+                if (now - lastDetectionTime >= DETECTION_INTERVAL && !isProcessing && !modalShown) {
+                    lastDetectionTime = now;
+                    detectFaceInFrame();
+                }
+                faceDetectionLoop = requestAnimationFrame(detectLoop);
+            }
+            
+            faceDetectionLoop = requestAnimationFrame(detectLoop);
+        }
+        
+        function stopFaceDetection() {
+            if (faceDetectionLoop) {
+                cancelAnimationFrame(faceDetectionLoop);
+                faceDetectionLoop = null;
+            }
+            if (faceDetectionInterval) {
+                clearInterval(faceDetectionInterval);
+                faceDetectionInterval = null;
+            }
+            isDetecting = false;
+            const overlay = document.getElementById('faceOverlay');
+            clearFaceBox(overlay);
+        }
+        
+        // Progress bar animation
+        function startProgressAnimation() {
+            const progressOverlay = document.getElementById('progressOverlay');
+            const progressBar = document.getElementById('progressBar');
+            
+            progressOverlay.classList.add('active');
+            progressBar.style.width = '0%';
+            
+            // Animate from 0% to 100% in 2 seconds
+            let progress = 0;
+            const duration = 2000; // 2 seconds
+            const startTime = Date.now();
+            
+            if (progressAnimation) {
+                cancelAnimationFrame(progressAnimation);
+            }
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                progress = Math.min((elapsed / duration) * 100, 100);
+                progressBar.style.width = progress + '%';
+                
+                if (progress < 100) {
+                    progressAnimation = requestAnimationFrame(animate);
+                }
+            }
+            
+            progressAnimation = requestAnimationFrame(animate);
+        }
+        
+        function stopProgressAnimation() {
+            if (progressAnimation) {
+                cancelAnimationFrame(progressAnimation);
+                progressAnimation = null;
+            }
+            
+            const progressOverlay = document.getElementById('progressOverlay');
+            const progressBar = document.getElementById('progressBar');
+            
+            // Complete animation
+            progressBar.style.width = '100%';
+            
+            setTimeout(() => {
+                progressOverlay.classList.remove('active');
+                progressBar.style.width = '0%';
+            }, 300);
+        }
+        
+        // Update overlay canvas size when video size changes
+        function updateOverlaySize() {
+            const video = document.getElementById('video');
+            const overlay = document.getElementById('faceOverlay');
+            
+            if (video && overlay) {
+                const rect = video.getBoundingClientRect();
+                overlay.width = rect.width;
+                overlay.height = rect.height;
+            }
+        }
+        
+        // Polyfill for roundRect if not supported
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                this.beginPath();
+                this.moveTo(x + radius, y);
+                this.lineTo(x + width - radius, y);
+                this.quadraticCurveTo(x + width, y, x + width, y + radius);
+                this.lineTo(x + width, y + height - radius);
+                this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                this.lineTo(x + radius, y + height);
+                this.quadraticCurveTo(x, y + height, x, y + height - radius);
+                this.lineTo(x, y + radius);
+                this.quadraticCurveTo(x, y, x + radius, y);
+                this.closePath();
+            };
+        }
+        
         // Start camera on load
-        window.addEventListener('load', startCamera);
+        window.addEventListener('load', () => {
+            startCamera();
+            // Update overlay size periodically
+            setInterval(updateOverlaySize, 500);
+        });
         
         // Stop camera on unload
         window.addEventListener('beforeunload', () => {
             stopAutoScan();
+            stopFaceDetection();
+            if (progressAnimation) {
+                cancelAnimationFrame(progressAnimation);
+            }
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
