@@ -14,7 +14,7 @@ import io
 from face_recognition.encoder import ArcFaceEncoder
 from face_recognition.database import FaceDatabase
 from face_recognition.matcher import FaceMatcher
-from face_recognition.config import FLASK_SECRET_KEY, COSINE_SIMILARITY_THRESHOLD
+from face_recognition.config import FLASK_SECRET_KEY, COSINE_SIMILARITY_THRESHOLD, ENABLE_GAP_VALIDATION
 
 # Import HTML template - perlu update dengan logging
 # Untuk sekarang, kita akan load template dari file
@@ -87,6 +87,10 @@ def recognize():
         
         threshold = request.args.get('threshold', type=float) or COSINE_SIMILARITY_THRESHOLD
         
+        # Check if this is auto-scan mode
+        is_auto_scan = request.headers.get('X-Auto-Scan', 'false').lower() == 'true' or \
+                       request.args.get('auto_scan', 'false').lower() == 'true'
+        
         # Generate embedding
         embedding = encoder.encode_from_array(image_bgr)
         
@@ -97,7 +101,9 @@ def recognize():
             }), 400
         
         # Match dengan database
-        matches = matcher.match(embedding, threshold=threshold)
+        # Untuk auto-scan, tidak require gap (voting mechanism handle konsistensi)
+        require_gap = not is_auto_scan
+        matches = matcher.match(embedding, threshold=threshold, require_gap=require_gap)
         
         if not matches:
             return jsonify({
@@ -107,6 +113,38 @@ def recognize():
             }), 404
         
         best_match = matches[0]
+        
+        # Validasi gap (hanya jika diaktifkan di config)
+        # Threshold sudah cukup tinggi untuk mengurangi false positive
+        # Voting mechanism sudah handle konsistensi untuk auto-scan
+        if ENABLE_GAP_VALIDATION and not is_auto_scan and len(matches) > 1:
+            best_confidence = best_match['confidence']
+            second_confidence = matches[1]['confidence']
+            gap = best_confidence - second_confidence
+            
+            # Untuk manual scan, hanya validasi gap jika confidence rendah (< 0.70)
+            if best_confidence < 0.70:
+                min_gap_required = 0.08
+            elif best_confidence < 0.75:
+                min_gap_required = 0.05
+            else:
+                min_gap_required = 0.02  # Confidence tinggi, gap tidak terlalu penting
+            
+            if gap < min_gap_required:
+                return jsonify({
+                    'success': False,
+                    'error': 'Match confidence too close to other candidates. Please try again with better lighting/angle.',
+                    'best_match': {
+                        'nim': best_match['nim'],
+                        'confidence': best_confidence
+                    },
+                    'second_match': {
+                        'nim': matches[1]['nim'],
+                        'confidence': second_confidence
+                    },
+                    'gap': gap,
+                    'min_required_gap': min_gap_required
+                }), 400
         
         # Log recognition
         db.log_recognition(

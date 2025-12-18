@@ -23,11 +23,13 @@ NORMALIZATION_STD = 128.0
 # Formula: (img - 127.5) / 128.0
 
 # RetinaFace Settings
-RETINAFACE_CONFIDENCE_THRESHOLD = 0.5
+RETINAFACE_CONFIDENCE_THRESHOLD = 0.7  # Naikkan dari 0.5 untuk deteksi lebih akurat
 RETINAFACE_NMS_THRESHOLD = 0.4
 
 # Matching Settings
-COSINE_SIMILARITY_THRESHOLD = 0.55  # Default threshold (bisa di-tune: 0.5-0.6)
+COSINE_SIMILARITY_THRESHOLD = 0.75  # Threshold untuk matching (ArcFace optimal: 0.70-0.75)
+ENABLE_GAP_VALIDATION = False  # Nonaktifkan gap validation (threshold sudah cukup, voting mechanism handle konsistensi)
+MIN_CONFIDENCE_GAP = 0.1  # Gap minimum (tidak digunakan jika ENABLE_GAP_VALIDATION = False)
 TOP_K_MATCHES = 5  # Return top 5 matches
 
 # Image Format Support

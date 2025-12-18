@@ -1,6 +1,7 @@
 """
 Preprocessor untuk Face Recognition dengan ArcFace
-Handles: Multi-format support, RetinaFace detection, 5-point alignment, normalization
+VERSI INSIGHTFACE MURNI - Tidak ada alignment manual
+InsightFace sudah handle: detection, alignment, crop, resize secara internal
 """
 import cv2
 import numpy as np
@@ -17,16 +18,20 @@ from face_recognition.config import (
 
 
 class FacePreprocessor:
-    """Preprocessor untuk face recognition dengan ArcFace pipeline."""
+    """
+    Preprocessor untuk face recognition dengan InsightFace pipeline.
+    IMPORTANT: Menggunakan InsightFace murni untuk alignment yang konsisten.
+    """
     
     def __init__(self):
-        """Initialize RetinaFace detector."""
-        # Initialize InsightFace FaceAnalysis (includes RetinaFace)
+        """Initialize InsightFace FaceAnalysis."""
+        # Initialize InsightFace FaceAnalysis (includes RetinaFace + ArcFace)
         self.app = FaceAnalysis(
             providers=['CPUExecutionProvider'],  # Use CPU, bisa ganti ke CUDAExecutionProvider untuk GPU
             allowed_modules=['detection', 'recognition']
         )
         self.app.prepare(ctx_id=-1, det_size=(640, 640))
+        print("FacePreprocessor initialized with InsightFace")
     
     def load_image(self, image_path: str) -> Optional[np.ndarray]:
         """
@@ -74,18 +79,23 @@ class FacePreprocessor:
         except Exception as e:
             raise ValueError(f"Gagal load image {image_path}: {str(e)}")
     
-    def detect_face(self, image: np.ndarray) -> Optional[dict]:
+    def detect_and_get_face(self, image: np.ndarray) -> Optional[dict]:
         """
-        Detect wajah menggunakan RetinaFace dengan 5 landmarks.
+        Detect wajah dan dapatkan data face dari InsightFace.
+        InsightFace akan handle alignment secara internal.
         
         Args:
             image: Image dalam format BGR (OpenCV)
             
         Returns:
-            Dictionary dengan keys: 'bbox', 'kps' (5 landmarks), 'det_score'
+            Dictionary dengan keys: 'face_obj', 'bbox', 'det_score', 'embedding'
             atau None jika tidak ada wajah
         """
-        # Detect faces
+        # Detect faces dengan InsightFace
+        # InsightFace.get() akan:
+        # 1. Detect dengan RetinaFace
+        # 2. Align secara internal dengan 5-point landmarks
+        # 3. Generate embedding yang sudah aligned
         faces = self.app.get(image)
         
         if len(faces) == 0:
@@ -94,45 +104,180 @@ class FacePreprocessor:
         # Ambil wajah dengan confidence tertinggi
         best_face = max(faces, key=lambda x: x.det_score)
         
-        # Extract bbox dan landmarks (5 points)
-        bbox = best_face.bbox.astype(int)  # [x1, y1, x2, y2]
-        kps = best_face.kps.astype(int)    # 5 landmarks: [left_eye, right_eye, nose, left_mouth, right_mouth]
-        det_score = best_face.det_score
-        
-        if det_score < RETINAFACE_CONFIDENCE_THRESHOLD:
+        # Check confidence threshold
+        if best_face.det_score < RETINAFACE_CONFIDENCE_THRESHOLD:
             return None
         
         return {
-            'bbox': bbox,
-            'kps': kps,
-            'det_score': det_score
+            'face_obj': best_face,
+            'bbox': best_face.bbox.astype(int),
+            'kps': best_face.kps if hasattr(best_face, 'kps') else None,
+            'det_score': best_face.det_score,
+            'embedding': best_face.normed_embedding  # Sudah aligned & normalized!
         }
     
-    def align_face(self, image: np.ndarray, landmarks: np.ndarray) -> np.ndarray:
+    def detect_face(self, image: np.ndarray) -> Optional[dict]:
         """
-        Align wajah menggunakan 5 landmarks.
-        InsightFace sudah include alignment, tapi kita bisa enhance dengan custom alignment.
+        Detect wajah menggunakan InsightFace.
+        Wrapper untuk backward compatibility.
         
         Args:
-            image: Original image
-            landmarks: 5 landmarks [left_eye, right_eye, nose, left_mouth, right_mouth]
+            image: Image dalam format BGR (OpenCV)
             
         Returns:
-            Aligned face image
+            Dictionary dengan keys: 'bbox', 'kps', 'det_score'
+            atau None jika tidak ada wajah
         """
-        # InsightFace sudah melakukan alignment internal
-        # Tapi kita bisa tambahkan custom alignment jika perlu
-        # Untuk sekarang, return image as-is karena InsightFace sudah handle alignment
-        return image
+        result = self.detect_and_get_face(image)
+        if result is None:
+            return None
+        
+        return {
+            'bbox': result['bbox'],
+            'kps': result['kps'],
+            'det_score': result['det_score']
+        }
     
-    def crop_face(self, image: np.ndarray, bbox: np.ndarray, margin: float = 0.2) -> np.ndarray:
+    def get_embedding_direct(self, image: np.ndarray) -> Optional[np.ndarray]:
         """
-        Crop wajah dari image dengan margin.
+        Dapatkan embedding langsung dari InsightFace.
+        INI CARA YANG BENAR - InsightFace handle semua alignment internally.
+        
+        Args:
+            image: Image dalam format BGR (OpenCV)
+            
+        Returns:
+            512-D embedding vector (normalized) atau None jika gagal
+        """
+        result = self.detect_and_get_face(image)
+        if result is None:
+            return None
+        
+        return result['embedding']
+    
+    def get_embedding_from_path(self, image_path: str) -> Optional[np.ndarray]:
+        """
+        Dapatkan embedding langsung dari file path.
+        Pipeline paling simpel dan konsisten.
+        
+        Args:
+            image_path: Path ke image file
+            
+        Returns:
+            512-D embedding vector (normalized) atau None jika gagal
+        """
+        try:
+            # Load image
+            image = self.load_image(image_path)
+            if image is None:
+                return None
+            
+            # Get embedding langsung dari InsightFace
+            return self.get_embedding_direct(image)
+            
+        except Exception as e:
+            print(f"Error getting embedding from {image_path}: {str(e)}")
+            return None
+    
+    # ==================== LEGACY METHODS (untuk backward compatibility) ====================
+    # Method-method di bawah ini disimpan untuk backward compatibility
+    # tapi TIDAK DIREKOMENDASIKAN untuk digunakan
+    
+    def preprocess(self, image_path: str) -> Optional[np.ndarray]:
+        """
+        LEGACY: Complete preprocessing pipeline.
+        
+        CATATAN: Method ini disimpan untuk backward compatibility.
+        Untuk hasil yang KONSISTEN, gunakan get_embedding_from_path() atau get_embedding_direct()
+        
+        Args:
+            image_path: Path ke image file
+            
+        Returns:
+            Preprocessed face image (112, 112, 3) dalam format RGB, float32
+            atau None jika gagal
+        """
+        try:
+            # Load image
+            image = self.load_image(image_path)
+            if image is None:
+                return None
+            
+            # Detect face dan dapatkan crop
+            face_data = self.detect_and_get_face(image)
+            if face_data is None:
+                return None
+            
+            face_obj = face_data['face_obj']
+            bbox = face_data['bbox']
+            
+            # Crop face dengan margin
+            face_crop = self._simple_crop(image, bbox, margin=0.3)
+            
+            # Resize to 112x112
+            face_resized = cv2.resize(face_crop, ARCFACE_INPUT_SIZE, interpolation=cv2.INTER_AREA)
+            
+            # Normalize: (img - 127.5) / 128.0
+            face_float = face_resized.astype(np.float32)
+            face_normalized = (face_float - NORMALIZATION_MEAN) / NORMALIZATION_STD
+            
+            # Convert BGR ke RGB
+            face_rgb = cv2.cvtColor(face_normalized, cv2.COLOR_BGR2RGB)
+            
+            return face_rgb
+            
+        except Exception as e:
+            print(f"Error preprocessing {image_path}: {str(e)}")
+            return None
+    
+    def preprocess_from_array(self, image: np.ndarray) -> Optional[np.ndarray]:
+        """
+        LEGACY: Preprocess dari numpy array (untuk real-time recognition).
+        
+        CATATAN: Method ini disimpan untuk backward compatibility.
+        Untuk hasil yang KONSISTEN, gunakan get_embedding_direct()
+        
+        Args:
+            image: Image array (BGR format)
+            
+        Returns:
+            Preprocessed face image atau None jika gagal
+        """
+        try:
+            # Detect face
+            face_data = self.detect_and_get_face(image)
+            if face_data is None:
+                return None
+            
+            bbox = face_data['bbox']
+            
+            # Simple crop tanpa alignment manual
+            face_crop = self._simple_crop(image, bbox, margin=0.3)
+            
+            # Resize
+            face_resized = cv2.resize(face_crop, ARCFACE_INPUT_SIZE, interpolation=cv2.INTER_AREA)
+            
+            # Normalize
+            face_float = face_resized.astype(np.float32)
+            face_normalized = (face_float - NORMALIZATION_MEAN) / NORMALIZATION_STD
+            
+            # Convert BGR ke RGB
+            face_rgb = cv2.cvtColor(face_normalized, cv2.COLOR_BGR2RGB)
+            
+            return face_rgb
+            
+        except Exception as e:
+            print(f"Error preprocessing from array: {str(e)}")
+            return None
+    
+    def _simple_crop(self, image: np.ndarray, bbox: np.ndarray, margin: float = 0.3) -> np.ndarray:
+        """
+        Simple crop tanpa alignment.
         
         Args:
             image: Original image
             bbox: Bounding box [x1, y1, x2, y2]
-            margin: Margin percentage (0.2 = 20% margin)
+            margin: Margin percentage
             
         Returns:
             Cropped face image
@@ -143,136 +288,34 @@ class FacePreprocessor:
         # Calculate margin
         width = x2 - x1
         height = y2 - y1
-        margin_x = int(width * margin)
-        margin_y = int(height * margin)
         
-        # Expand bbox dengan margin
-        x1 = max(0, x1 - margin_x)
-        y1 = max(0, y1 - margin_y)
-        x2 = min(w, x2 + margin_x)
-        y2 = min(h, y2 + margin_y)
+        # Make it square
+        size = max(width, height)
+        
+        # Calculate center
+        center_x = (x1 + x2) // 2
+        center_y = (y1 + y2) // 2
+        
+        # Expand dengan margin
+        half_size = int(size * (1 + margin) / 2)
+        
+        # Calculate new bbox centered
+        x1 = max(0, center_x - half_size)
+        y1 = max(0, center_y - half_size)
+        x2 = min(w, center_x + half_size)
+        y2 = min(h, center_y + half_size)
         
         # Crop
         face_crop = image[y1:y2, x1:x2]
         
+        # Handle edge case where crop is empty
+        if face_crop.size == 0:
+            # Fallback: use original bbox
+            x1, y1, x2, y2 = bbox
+            x1 = max(0, x1)
+            y1 = max(0, y1)
+            x2 = min(w, x2)
+            y2 = min(h, y2)
+            face_crop = image[y1:y2, x1:x2]
+        
         return face_crop
-    
-    def resize_face(self, face_image: np.ndarray) -> np.ndarray:
-        """
-        Resize wajah ke 112x112 (ArcFace requirement).
-        
-        Args:
-            face_image: Cropped face image
-            
-        Returns:
-            Resized image (112, 112, 3)
-        """
-        return cv2.resize(face_image, ARCFACE_INPUT_SIZE, interpolation=cv2.INTER_LINEAR)
-    
-    def normalize_face(self, face_image: np.ndarray) -> np.ndarray:
-        """
-        Normalize image sesuai ArcFace: (img - 127.5) / 128.0
-        
-        Args:
-            face_image: Face image (112x112, uint8, BGR)
-            
-        Returns:
-            Normalized image (112x112, float32, RGB)
-        """
-        # Convert ke float32
-        face_float = face_image.astype(np.float32)
-        
-        # Normalize: (img - 127.5) / 128.0
-        face_normalized = (face_float - NORMALIZATION_MEAN) / NORMALIZATION_STD
-        
-        # Convert BGR ke RGB (ArcFace expects RGB)
-        face_rgb = cv2.cvtColor(face_normalized, cv2.COLOR_BGR2RGB)
-        
-        return face_rgb
-    
-    def preprocess(self, image_path: str) -> Optional[np.ndarray]:
-        """
-        Complete preprocessing pipeline:
-        1. Load image (multi-format support)
-        2. Detect face (RetinaFace)
-        3. Crop face
-        4. Resize to 112x112
-        5. Normalize: (img - 127.5) / 128.0
-        6. Convert BGR to RGB
-        
-        Args:
-            image_path: Path ke image file
-            
-        Returns:
-            Preprocessed face image (112, 112, 3) dalam format RGB, float32
-            atau None jika gagal
-        """
-        try:
-            # Step 1: Load image
-            image = self.load_image(image_path)
-            if image is None:
-                return None
-            
-            # Step 2: Detect face
-            face_data = self.detect_face(image)
-            if face_data is None:
-                return None
-            
-            bbox = face_data['bbox']
-            landmarks = face_data['kps']
-            
-            # Step 3: Align (InsightFace sudah handle alignment)
-            aligned_image = self.align_face(image, landmarks)
-            
-            # Step 4: Crop face
-            face_crop = self.crop_face(aligned_image, bbox)
-            
-            # Step 5: Resize to 112x112
-            face_resized = self.resize_face(face_crop)
-            
-            # Step 6: Normalize
-            face_normalized = self.normalize_face(face_resized)
-            
-            return face_normalized
-            
-        except Exception as e:
-            print(f"Error preprocessing {image_path}: {str(e)}")
-            return None
-    
-    def preprocess_from_array(self, image: np.ndarray) -> Optional[np.ndarray]:
-        """
-        Preprocess dari numpy array (untuk real-time recognition).
-        
-        Args:
-            image: Image array (BGR format)
-            
-        Returns:
-            Preprocessed face image atau None jika gagal
-        """
-        try:
-            # Detect face
-            face_data = self.detect_face(image)
-            if face_data is None:
-                return None
-            
-            bbox = face_data['bbox']
-            landmarks = face_data['kps']
-            
-            # Align
-            aligned_image = self.align_face(image, landmarks)
-            
-            # Crop
-            face_crop = self.crop_face(aligned_image, bbox)
-            
-            # Resize
-            face_resized = self.resize_face(face_crop)
-            
-            # Normalize
-            face_normalized = self.normalize_face(face_resized)
-            
-            return face_normalized
-            
-        except Exception as e:
-            print(f"Error preprocessing from array: {str(e)}")
-            return None
-

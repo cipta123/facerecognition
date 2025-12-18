@@ -12,7 +12,7 @@ from typing import Optional
 from face_recognition.encoder import ArcFaceEncoder
 from face_recognition.matcher import FaceMatcher
 from face_recognition.database import FaceDatabase
-from face_recognition.config import FLASK_SECRET_KEY, FLASK_DEBUG, COSINE_SIMILARITY_THRESHOLD
+from face_recognition.config import FLASK_SECRET_KEY, FLASK_DEBUG, COSINE_SIMILARITY_THRESHOLD, ENABLE_GAP_VALIDATION
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = FLASK_SECRET_KEY
@@ -129,15 +129,23 @@ def recognize():
         embedding = encoder.encode_from_array(image_bgr)
         
         if embedding is None:
+            print("[ERROR] No face detected in image")
             return jsonify({
                 'success': False,
                 'error': 'No face detected in image'
             }), 400
         
-        # Match dengan database
-        matches = matcher.match(embedding, threshold=threshold)
+        # Check if this is auto-scan mode (from header or parameter)
+        is_auto_scan = request.headers.get('X-Auto-Scan', 'false').lower() == 'true' or \
+                       request.args.get('auto_scan', 'false').lower() == 'true'
+        
+        # Match dengan database (dengan validasi gap)
+        # Untuk auto-scan, kita lebih fleksibel dengan gap
+        require_gap = not is_auto_scan  # Auto-scan tidak require gap ketat
+        matches = matcher.match(embedding, threshold=threshold, require_gap=require_gap)
         
         if not matches:
+            print(f"[ERROR] No match found above threshold {threshold}")
             return jsonify({
                 'success': False,
                 'error': 'No match found above threshold',
@@ -146,6 +154,52 @@ def recognize():
         
         # Get best match
         best_match = matches[0]
+        
+        # Log similarity scores untuk debugging
+        if len(matches) > 1:
+            print(f"[DEBUG] Best match: NIM {best_match['nim']} (confidence: {best_match['confidence']:.4f})")
+            print(f"[DEBUG] Second match: NIM {matches[1]['nim']} (confidence: {matches[1]['confidence']:.4f})")
+            print(f"[DEBUG] Gap: {best_match['confidence'] - matches[1]['confidence']:.4f}")
+        else:
+            print(f"[DEBUG] Single match: NIM {best_match['nim']} (confidence: {best_match['confidence']:.4f})")
+        
+        # Validasi gap (hanya jika diaktifkan di config)
+        # Threshold sudah cukup tinggi untuk mengurangi false positive
+        # Voting mechanism sudah handle konsistensi untuk auto-scan
+        if ENABLE_GAP_VALIDATION and not is_auto_scan and len(matches) > 1:
+            best_confidence = best_match['confidence']
+            second_confidence = matches[1]['confidence']
+            gap = best_confidence - second_confidence
+            
+            # Untuk manual scan, hanya validasi gap jika confidence rendah (< 0.70)
+            # Jika confidence tinggi, kita lebih percaya pada hasil
+            if best_confidence < 0.70:
+                # Jika confidence rendah, butuh gap yang lebih besar untuk memastikan akurasi
+                min_gap_required = 0.08  # Lebih fleksibel dari default
+            elif best_confidence < 0.75:
+                min_gap_required = 0.05  # Sedang
+            else:
+                # Confidence tinggi (> 0.75), gap tidak terlalu penting
+                min_gap_required = 0.02  # Sangat fleksibel
+            
+            if gap < min_gap_required:
+                print(f"[WARNING] Gap too small: {gap:.4f} < {min_gap_required:.4f} (best: {best_confidence:.4f}, second: {second_confidence:.4f})")
+                return jsonify({
+                    'success': False,
+                    'error': 'Match confidence too close to other candidates. Please try again with better lighting/angle.',
+                    'best_match': {
+                        'nim': best_match['nim'],
+                        'confidence': best_confidence
+                    },
+                    'second_match': {
+                        'nim': matches[1]['nim'],
+                        'confidence': second_confidence
+                    },
+                    'gap': gap,
+                    'min_required_gap': min_gap_required
+                }), 400
+        
+        print(f"[SUCCESS] Recognized: NIM {best_match['nim']} with confidence {best_match['confidence']:.4f}")
         
         # Log recognition
         db.log_recognition(

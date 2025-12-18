@@ -241,15 +241,24 @@ class FaceDatabase:
                 
                 cosine_sim = np.dot(query_embedding, db_embedding) / (query_norm * db_norm)
                 
+                # Clamp to [0, 1] untuk memastikan valid range
+                cosine_sim = max(0.0, min(1.0, float(cosine_sim)))
+                
                 if cosine_sim >= threshold:
                     results.append({
                         'nim': nim,
-                        'confidence': float(cosine_sim),
+                        'confidence': cosine_sim,
                         'photo_path': photo_path
                     })
             
             # Sort by confidence (descending)
             results.sort(key=lambda x: x['confidence'], reverse=True)
+            
+            # Log top results untuk debugging
+            if results:
+                top_3 = results[:3]
+                top_3_str = [(r['nim'], f"{r['confidence']:.4f}") for r in top_3]
+                print(f"[DEBUG] Top 3 matches: {top_3_str}")
             
             # Return top_k
             return results[:top_k]

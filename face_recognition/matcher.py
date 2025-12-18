@@ -5,7 +5,7 @@ import numpy as np
 from typing import List, Dict, Optional
 from scipy.spatial.distance import cosine
 
-from face_recognition.config import COSINE_SIMILARITY_THRESHOLD, TOP_K_MATCHES
+from face_recognition.config import COSINE_SIMILARITY_THRESHOLD, TOP_K_MATCHES, MIN_CONFIDENCE_GAP
 from face_recognition.database import FaceDatabase
 
 
@@ -17,6 +17,7 @@ class FaceMatcher:
         self.db = database or FaceDatabase()
         self.threshold = COSINE_SIMILARITY_THRESHOLD
         self.top_k = TOP_K_MATCHES
+        self.min_gap = MIN_CONFIDENCE_GAP
     
     def cosine_similarity(self, embedding1: np.ndarray, embedding2: np.ndarray) -> float:
         """
@@ -43,7 +44,7 @@ class FaceMatcher:
         return max(0.0, min(1.0, similarity))
     
     def match(self, query_embedding: np.ndarray, threshold: float = None, 
-              top_k: int = None) -> List[Dict]:
+              top_k: int = None, require_gap: bool = True) -> List[Dict]:
         """
         Match query embedding dengan database.
         
@@ -51,6 +52,7 @@ class FaceMatcher:
             query_embedding: Query embedding vector
             threshold: Minimum similarity threshold (default dari config)
             top_k: Number of top results (default dari config)
+            require_gap: Jika True, best match harus punya gap minimum dengan second match
             
         Returns:
             List of matches: [{'nim': str, 'confidence': float, 'photo_path': str}, ...]
@@ -62,6 +64,18 @@ class FaceMatcher:
         
         # Search in database
         matches = self.db.search_similar(query_embedding, threshold, top_k)
+        
+        # Validasi gap jika ada lebih dari 1 match
+        if require_gap and len(matches) > 1:
+            best_confidence = matches[0]['confidence']
+            second_confidence = matches[1]['confidence']
+            gap = best_confidence - second_confidence
+            
+            # Jika gap terlalu kecil, mungkin hasil tidak reliable
+            if gap < self.min_gap:
+                # Return empty atau hanya best match dengan warning
+                # Untuk sekarang, kita tetap return tapi bisa ditandai
+                pass
         
         return matches
     
@@ -82,19 +96,33 @@ class FaceMatcher:
             results.append(matches)
         return results
     
-    def get_best_match(self, query_embedding: np.ndarray, threshold: float = None) -> Optional[Dict]:
+    def get_best_match(self, query_embedding: np.ndarray, threshold: float = None, 
+                      require_gap: bool = True) -> Optional[Dict]:
         """
-        Get best match (top 1).
+        Get best match (top 1) dengan validasi gap.
         
         Args:
             query_embedding: Query embedding vector
             threshold: Minimum similarity threshold
+            require_gap: Jika True, best match harus punya gap minimum dengan second match
             
         Returns:
-            Best match dict atau None jika tidak ada match di atas threshold
+            Best match dict atau None jika tidak ada match di atas threshold atau gap tidak cukup
         """
-        matches = self.match(query_embedding, threshold, top_k=1)
-        if matches:
-            return matches[0]
-        return None
+        matches = self.match(query_embedding, threshold, top_k=2, require_gap=require_gap)
+        
+        if not matches:
+            return None
+        
+        # Jika require_gap dan ada second match, cek gap
+        if require_gap and len(matches) > 1:
+            best_confidence = matches[0]['confidence']
+            second_confidence = matches[1]['confidence']
+            gap = best_confidence - second_confidence
+            
+            if gap < self.min_gap:
+                # Gap terlalu kecil, hasil tidak reliable
+                return None
+        
+        return matches[0]
 

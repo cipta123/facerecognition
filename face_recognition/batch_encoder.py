@@ -55,12 +55,13 @@ class BatchEncoder:
             photo_files.extend(photos_dir.glob(f"*{ext}"))
         return sorted(photo_files)
     
-    def process_file(self, photo_path: Path) -> tuple:
+    def process_file(self, photo_path: Path, force: bool = False) -> tuple:
         """
         Process single photo file.
         
         Args:
             photo_path: Path ke photo file
+            force: Jika True, regenerate embedding meskipun sudah ada di database
             
         Returns:
             (success: bool, nim: str, error: str or None)
@@ -70,9 +71,10 @@ class BatchEncoder:
             nim = self.extract_nim_from_filename(photo_path.name)
             
             # Check if already exists in database
-            existing = self.db.get_embedding(nim)
-            if existing is not None:
-                return (True, nim, None)  # Already processed
+            if not force:
+                existing = self.db.get_embedding(nim)
+                if existing is not None:
+                    return (True, nim, "Already processed (use --force to regenerate)")
             
             # Generate embedding
             embedding = self.encoder.encode_from_path(str(photo_path))
@@ -80,7 +82,7 @@ class BatchEncoder:
             if embedding is None:
                 return (False, nim, "Gagal generate embedding (no face detected atau error)")
             
-            # Save to database
+            # Save to database (will overwrite if exists)
             success = self.db.save_embedding(nim, embedding, str(photo_path))
             
             if success:
@@ -92,13 +94,14 @@ class BatchEncoder:
             nim = self.extract_nim_from_filename(photo_path.name)
             return (False, nim, str(e))
     
-    def process_files(self, photo_files: List[Path], desc: str = "Processing") -> dict:
+    def process_files(self, photo_files: List[Path], desc: str = "Processing", force: bool = False) -> dict:
         """
         Process multiple photo files.
         
         Args:
             photo_files: List of photo file paths
             desc: Progress bar description
+            force: Jika True, regenerate embedding meskipun sudah ada di database
             
         Returns:
             Statistics dict
@@ -113,13 +116,13 @@ class BatchEncoder:
         
         with tqdm(total=len(photo_files), desc=desc) as pbar:
             for photo_path in photo_files:
-                success, nim, error = self.process_file(photo_path)
+                success, nim, error = self.process_file(photo_path, force=force)
                 
                 if success:
-                    if error is None:
+                    if error is None or "Regenerated" in str(error):
                         stats['success'] += 1
                     else:
-                        stats['skipped'] += 1  # Already exists
+                        stats['skipped'] += 1  # Already exists (and not forced)
                 else:
                     stats['failed'] += 1
                     stats['errors'].append({
@@ -137,12 +140,13 @@ class BatchEncoder:
         
         return stats
     
-    def process_sample(self, n: int = 100) -> dict:
+    def process_sample(self, n: int = 100, force: bool = False) -> dict:
         """
         Process random sample of photos.
         
         Args:
             n: Number of samples
+            force: Jika True, regenerate embedding meskipun sudah ada di database
             
         Returns:
             Statistics dict
@@ -160,14 +164,15 @@ class BatchEncoder:
         sample_files = random.sample(photo_files, n)
         print(f"Processing {n} random samples dari {len(photo_files)} total files...")
         
-        return self.process_files(sample_files, desc="Processing samples")
+        return self.process_files(sample_files, desc="Processing samples", force=force)
     
-    def process_custom_files(self, file_list: List[str]) -> dict:
+    def process_custom_files(self, file_list: List[str], force: bool = False) -> dict:
         """
         Process custom file list.
         
         Args:
             file_list: List of filenames atau paths
+            force: Jika True, regenerate embedding meskipun sudah ada di database
             
         Returns:
             Statistics dict
@@ -190,12 +195,48 @@ class BatchEncoder:
             return {}
         
         print(f"Processing {len(photo_files)} custom files...")
-        return self.process_files(photo_files, desc="Processing custom files")
+        return self.process_files(photo_files, desc="Processing custom files", force=force)
     
-    def process_all(self) -> dict:
+    def process_nims(self, nim_list: List[str], force: bool = False) -> dict:
+        """
+        Process specific NIMs dari database.
+        Mencari file foto berdasarkan NIM di photos directory.
+        
+        Args:
+            nim_list: List of NIMs atau identifiers
+            force: Jika True, regenerate embedding meskipun sudah ada di database
+            
+        Returns:
+            Statistics dict
+        """
+        photo_files = []
+        for nim in nim_list:
+            # Cari file dengan nama NIM (dengan berbagai extension)
+            found = False
+            for ext in SUPPORTED_FORMATS:
+                photo_path = PHOTOS_DIR / f"{nim}{ext}"
+                if photo_path.exists():
+                    photo_files.append(photo_path)
+                    found = True
+                    break
+            
+            if not found:
+                print(f"Warning: Foto tidak ditemukan untuk NIM: {nim}")
+        
+        if len(photo_files) == 0:
+            print("Tidak ada foto ditemukan untuk NIM yang diminta")
+            return {}
+        
+        print(f"Processing {len(photo_files)} files untuk {len(nim_list)} NIMs...")
+        return self.process_files(photo_files, desc="Processing NIMs", force=force)
+    
+    def process_all(self, force: bool = False) -> dict:
         """
         Process semua foto dari photos directory.
         
+        Args:
+            force: Jika True, regenerate embedding meskipun sudah ada di database
+            
         Returns:
             Statistics dict
         """
@@ -206,7 +247,7 @@ class BatchEncoder:
             return {}
         
         print(f"Processing {len(photo_files)} files...")
-        return self.process_files(photo_files, desc="Processing all files")
+        return self.process_files(photo_files, desc="Processing all files", force=force)
     
     def print_stats(self, stats: dict):
         """Print processing statistics."""
@@ -242,9 +283,19 @@ def main():
         help="Process custom file list (e.g., --files cipta_anugrah.png 857264993.jpg)"
     )
     parser.add_argument(
+        "--nims",
+        nargs="+",
+        help="Process specific NIMs (e.g., --nims 857264993 857267523 cipta_anugrah)"
+    )
+    parser.add_argument(
         "--all",
         action="store_true",
         help="Process semua foto"
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force regenerate embeddings meskipun sudah ada di database"
     )
     
     args = parser.parse_args()
@@ -253,15 +304,18 @@ def main():
     batch_encoder = BatchEncoder()
     
     # Process based on arguments
-    if args.files:
-        # Custom file list (include cipta_anugrah.png)
-        stats = batch_encoder.process_custom_files(args.files)
+    if args.nims:
+        # Process specific NIMs
+        stats = batch_encoder.process_nims(args.nims, force=args.force)
+    elif args.files:
+        # Custom file list
+        stats = batch_encoder.process_custom_files(args.files, force=args.force)
     elif args.sample:
         # Random sample
-        stats = batch_encoder.process_sample(args.sample)
+        stats = batch_encoder.process_sample(args.sample, force=args.force)
     elif args.all:
         # All files
-        stats = batch_encoder.process_all()
+        stats = batch_encoder.process_all(force=args.force)
     else:
         # Default: process sample dengan cipta_anugrah.png
         print("No mode specified. Processing sample dengan cipta_anugrah.png...")
@@ -272,7 +326,7 @@ def main():
         if jpg_files:
             default_files.extend(jpg_files[:5])  # Add first 5 JPG files
         
-        stats = batch_encoder.process_custom_files(default_files)
+        stats = batch_encoder.process_custom_files(default_files, force=args.force)
     
     # Print statistics
     batch_encoder.print_stats(stats)
