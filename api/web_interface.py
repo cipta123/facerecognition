@@ -613,10 +613,15 @@ HTML_TEMPLATE = """
         let stableResult = null; // Hasil yang sudah stabil
         let modalShown = false; // Track apakah modal sedang ditampilkan
         let activeDropdown = null; // Track dropdown yang sedang aktif
-        let faceDetectionInterval = null; // Interval untuk face detection
+        let faceDetectionInterval = null; // (legacy) Interval untuk face detection
         let faceDetectionLoop = null; // RequestAnimationFrame loop
         let currentFaceBox = null; // Current detected face box
         let progressAnimation = null; // Progress bar animation
+        
+        // Face persistence (temporal smoothing) to avoid flicker
+        let lastFaceData = null;
+        let lastFaceTime = 0;
+        const FACE_TIMEOUT = 800; // ms: keep last box for a short time even if a frame misses
         
         // Dropdown functions
         function toggleDropdown(type) {
@@ -1149,8 +1154,8 @@ HTML_TEMPLATE = """
                     loading.classList.remove('active');
                 }
                 
-                // Resume face detection
-                if (!faceDetectionInterval) {
+                // Resume face detection loop if needed
+                if (!faceDetectionLoop) {
                     startFaceDetection();
                 }
                 
@@ -1206,8 +1211,8 @@ HTML_TEMPLATE = """
                 // Stop progress animation
                 stopProgressAnimation();
                 
-                // Resume face detection
-                if (!faceDetectionInterval) {
+                // Resume face detection loop if needed
+                if (!faceDetectionLoop) {
                     startFaceDetection();
                 }
                 
@@ -1285,22 +1290,24 @@ HTML_TEMPLATE = """
                         if (response.ok) {
                             const data = await response.json();
                             if (data.success && data.face) {
-                                drawFaceBox(data.face, video, overlay);
+                                // Update persistence state
+                                lastFaceData = data.face;
+                                lastFaceTime = Date.now();
+                                drawFaceBox(lastFaceData, video, overlay);
                             } else {
-                                clearFaceBox(overlay);
+                                // Do NOT clear immediately; keep last box for FACE_TIMEOUT
+                                // (render loop will handle clearing after timeout)
                             }
                         } else {
-                            clearFaceBox(overlay);
+                            // Do NOT clear immediately on a single failed request
                         }
                     } catch (err) {
-                        // Silently fail - don't spam console
-                        clearFaceBox(overlay);
+                        // Silently fail - keep last box (avoid flicker)
                     } finally {
                         isDetecting = false;
                     }
                 }, 'image/jpeg', 0.7); // Lower quality (0.7) untuk lebih cepat
             } catch (err) {
-                clearFaceBox(overlay);
                 isDetecting = false;
             }
         }
@@ -1359,12 +1366,26 @@ HTML_TEMPLATE = """
             stopFaceDetection();
             
             let lastDetectionTime = 0;
-            const DETECTION_INTERVAL = 200; // 200ms = 5 FPS untuk detection (lebih cepat)
+            const DETECTION_INTERVAL = 100; // 100ms = 10 FPS untuk detection (lebih smooth)
             
             // Use requestAnimationFrame untuk lebih smooth
             function detectLoop() {
                 const now = Date.now();
-                if (now - lastDetectionTime >= DETECTION_INTERVAL && !isProcessing && !modalShown) {
+                
+                // Always render last known face box to avoid flicker (even if no new detection yet)
+                const overlay = document.getElementById('faceOverlay');
+                const video = document.getElementById('video');
+                if (overlay && video && lastFaceData && (now - lastFaceTime) < FACE_TIMEOUT) {
+                    drawFaceBox(lastFaceData, video, overlay);
+                } else if (overlay && (now - lastFaceTime) >= FACE_TIMEOUT) {
+                    // Only clear after timeout (not per-frame)
+                    clearFaceBox(overlay);
+                    lastFaceData = null;
+                }
+                
+                // Run detection requests periodically; do NOT depend on every frame
+                // Keep detection paused while modal shown; during recognition we keep last box rendered.
+                if (now - lastDetectionTime >= DETECTION_INTERVAL && !modalShown && !isDetecting && !isProcessing) {
                     lastDetectionTime = now;
                     detectFaceInFrame();
                 }
@@ -1386,6 +1407,8 @@ HTML_TEMPLATE = """
             isDetecting = false;
             const overlay = document.getElementById('faceOverlay');
             clearFaceBox(overlay);
+            lastFaceData = null;
+            lastFaceTime = 0;
         }
         
         // Progress bar animation

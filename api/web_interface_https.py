@@ -85,14 +85,19 @@ def detect_face():
         image_bytes = file.read()
         image = Image.open(io.BytesIO(image_bytes))
         
+        # Keep original dims for scaling bbox back
+        original_width = request.form.get('width', type=int) or image.width
+        original_height = request.form.get('height', type=int) or image.height
+        
         # OPTIMIZATION: Resize image untuk detection lebih cepat
-        # Detection tidak perlu full resolution, cukup 320x240 atau max 640px
+        # Detection tidak perlu full resolution, cukup max 640px
         max_size = 640
+        resized_width, resized_height = image.width, image.height
         if image.width > max_size or image.height > max_size:
             ratio = min(max_size / image.width, max_size / image.height)
-            new_width = int(image.width * ratio)
-            new_height = int(image.height * ratio)
-            image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            resized_width = int(image.width * ratio)
+            resized_height = int(image.height * ratio)
+            image = image.resize((resized_width, resized_height), Image.Resampling.LANCZOS)
         
         # Convert to numpy array (BGR for OpenCV)
         image_array = np.array(image.convert('RGB'))
@@ -107,19 +112,15 @@ def detect_face():
                 'face': None
             })
         
-        # Scale bbox back to original size if image was resized
+        # Scale bbox back to original size if resized
         bbox = face_data['bbox'].copy()
-        if image.width != image_array.shape[1] or image.height != image_array.shape[0]:
-            # Get original size from request if available
-            original_width = request.form.get('width', type=int)
-            original_height = request.form.get('height', type=int)
-            if original_width and original_height:
-                scale_x = original_width / image.width
-                scale_y = original_height / image.height
-                bbox[0] = int(bbox[0] * scale_x)
-                bbox[1] = int(bbox[1] * scale_y)
-                bbox[2] = int(bbox[2] * scale_x)
-                bbox[3] = int(bbox[3] * scale_y)
+        if resized_width and resized_height and (resized_width != original_width or resized_height != original_height):
+            scale_x = original_width / resized_width
+            scale_y = original_height / resized_height
+            bbox[0] = int(bbox[0] * scale_x)
+            bbox[1] = int(bbox[1] * scale_y)
+            bbox[2] = int(bbox[2] * scale_x)
+            bbox[3] = int(bbox[3] * scale_y)
         
         # Return bbox in format [x1, y1, x2, y2]
         return jsonify({
