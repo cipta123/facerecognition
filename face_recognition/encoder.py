@@ -4,13 +4,18 @@ VERSI INSIGHTFACE MURNI - Menggunakan embedding langsung dari detection
 """
 import cv2
 import numpy as np
-from typing import Optional
+from typing import Optional, Tuple, Any, List, Dict
 import insightface
 from insightface.app import FaceAnalysis
 
 from face_recognition.config import (
     ARCFACE_MODEL_NAME, ARCFACE_EMBEDDING_SIZE, MODELS_DIR,
     RETINAFACE_CONFIDENCE_THRESHOLD
+)
+from face_recognition.quality_checker import (
+    quality_check_lightweight,
+    quality_check_strict,
+    user_message_for_reason,
 )
 
 
@@ -38,6 +43,72 @@ class ArcFaceEncoder:
             print(f"ArcFace model '{ARCFACE_MODEL_NAME}' loaded successfully")
         except Exception as e:
             raise RuntimeError(f"Gagal load ArcFace model: {str(e)}")
+
+    def load_image(self, image_path: str) -> Optional[np.ndarray]:
+        """Load image as BGR numpy array (OpenCV), with PIL fallback for PNG alpha, etc."""
+        try:
+            image = cv2.imread(str(image_path))
+            if image is not None:
+                return image
+
+            # Fallback ke PIL
+            from PIL import Image
+
+            pil_image = Image.open(image_path)
+            if pil_image.mode == 'RGBA':
+                rgb_image = Image.new('RGB', pil_image.size, (255, 255, 255))
+                rgb_image.paste(pil_image, mask=pil_image.split()[3])
+                pil_image = rgb_image
+            elif pil_image.mode != 'RGB':
+                pil_image = pil_image.convert('RGB')
+
+            image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+            return image
+        except Exception:
+            return None
+
+    def detect_faces(self, image_bgr: np.ndarray) -> List[Any]:
+        """Return all detected faces from InsightFace."""
+        try:
+            faces = self.model.get(image_bgr)
+            return list(faces) if faces is not None else []
+        except Exception:
+            return []
+
+    def encode_with_qc(self, image_bgr: np.ndarray, mode: str = "lightweight") -> Tuple[Optional[np.ndarray], Optional[Dict[str, Any]]]:
+        """
+        Encode with Quality Control.
+        mode:
+          - 'lightweight' for real-time
+          - 'strict' for database/registrasi
+        Returns: (embedding|None, qc_info|None)
+        """
+        faces = self.detect_faces(image_bgr)
+        if len(faces) == 0:
+            qc = {"ok": False, "reason": "no_face", "user_message": user_message_for_reason("no_face"), "details": {"num_faces": 0}}
+            return None, qc
+
+        if mode == "strict":
+            ok, reason, details, face = quality_check_strict(image_bgr, faces)
+        else:
+            ok, reason, details, face = quality_check_lightweight(image_bgr, faces)
+
+        if not ok or face is None:
+            qc = {"ok": False, "reason": reason, "user_message": user_message_for_reason(reason), "details": details}
+            return None, qc
+
+        embedding = getattr(face, "normed_embedding", None)
+        if embedding is None:
+            qc = {"ok": False, "reason": "no_face", "user_message": user_message_for_reason("no_face"), "details": {"why": "no_embedding"}}
+            return None, qc
+
+        embedding = np.array(embedding, dtype=np.float32)
+        if len(embedding) != ARCFACE_EMBEDDING_SIZE:
+            qc = {"ok": False, "reason": "no_face", "user_message": user_message_for_reason("no_face"), "details": {"why": "bad_embedding_size", "size": len(embedding)}}
+            return None, qc
+
+        qc = {"ok": True, "reason": "ok", "user_message": "ok", "details": details}
+        return embedding, qc
     
     def encode_from_path(self, image_path: str) -> Optional[np.ndarray]:
         """
@@ -51,22 +122,7 @@ class ArcFaceEncoder:
             512-D embedding vector (normalized) atau None jika gagal
         """
         try:
-            # Load image dengan OpenCV
-            image = cv2.imread(str(image_path))
-            if image is None:
-                # Try with PIL for special formats
-                from PIL import Image
-                from pathlib import Path
-                
-                pil_image = Image.open(image_path)
-                if pil_image.mode == 'RGBA':
-                    rgb_image = Image.new('RGB', pil_image.size, (255, 255, 255))
-                    rgb_image.paste(pil_image, mask=pil_image.split()[3])
-                    pil_image = rgb_image
-                elif pil_image.mode != 'RGB':
-                    pil_image = pil_image.convert('RGB')
-                
-                image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+            image = self.load_image(image_path)
             
             if image is None:
                 print(f"Failed to load image: {image_path}")

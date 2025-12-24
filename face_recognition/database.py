@@ -83,6 +83,17 @@ class FaceDatabase:
                 )
             """)
             
+            # Create registration_logs table
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS registration_logs (
+                    id SERIAL PRIMARY KEY,
+                    nim VARCHAR(20),
+                    status VARCHAR(20),
+                    message TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
             # Create indexes
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_nim ON embeddings(nim)
@@ -92,6 +103,12 @@ class FaceDatabase:
             """)
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_session ON recognition_logs(session_id)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_registration_nim ON registration_logs(nim)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_registration_created ON registration_logs(created_at)
             """)
             
             conn.commit()
@@ -167,6 +184,33 @@ class FaceDatabase:
             return None
         except Exception as e:
             print(f"Error getting embedding for {nim}: {str(e)}")
+            return None
+        finally:
+            self._return_connection(conn)
+    
+    def get_photo_path(self, nim: str) -> Optional[str]:
+        """
+        Get photo path dari database berdasarkan NIM.
+        
+        Args:
+            nim: NIM atau identifier
+            
+        Returns:
+            Photo path string atau None jika tidak ditemukan
+        """
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT photo_path FROM embeddings WHERE nim = %s
+            """, (nim,))
+            
+            result = cursor.fetchone()
+            if result and result[0]:
+                return result[0]
+            return None
+        except Exception as e:
+            print(f"Error getting photo path for {nim}: {str(e)}")
             return None
         finally:
             self._return_connection(conn)
@@ -297,6 +341,66 @@ class FaceDatabase:
         except Exception as e:
             conn.rollback()
             print(f"Error logging recognition: {str(e)}")
+            return False
+        finally:
+            self._return_connection(conn)
+    
+    def log_registration(self, nim: str, status: str, message: str = "") -> bool:
+        """
+        Log registration attempt.
+        
+        Args:
+            nim: NIM yang diregistrasi
+            status: 'success', 'failed', 'qc_failed', dll
+            message: Additional message/error details
+            
+        Returns:
+            True jika berhasil
+        """
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO registration_logs (nim, status, message)
+                VALUES (%s, %s, %s)
+            """, (nim, status, message))
+            
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"Error logging registration: {str(e)}")
+            return False
+        finally:
+            self._return_connection(conn)
+    
+    def delete_embedding(self, nim: str) -> bool:
+        """
+        Delete embedding dari database berdasarkan NIM.
+        
+        Args:
+            nim: NIM atau identifier yang akan dihapus
+            
+        Returns:
+            True jika berhasil dihapus, False jika gagal atau tidak ditemukan
+        """
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            
+            # Check if NIM exists first
+            cursor.execute("SELECT nim FROM embeddings WHERE nim = %s", (nim,))
+            if not cursor.fetchone():
+                return False  # NIM tidak ditemukan
+            
+            # Delete the embedding
+            cursor.execute("DELETE FROM embeddings WHERE nim = %s", (nim,))
+            
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            print(f"Error deleting embedding for {nim}: {str(e)}")
             return False
         finally:
             self._return_connection(conn)

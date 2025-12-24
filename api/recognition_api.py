@@ -13,6 +13,7 @@ from face_recognition.encoder import ArcFaceEncoder
 from face_recognition.matcher import FaceMatcher
 from face_recognition.database import FaceDatabase
 from face_recognition.config import FLASK_SECRET_KEY, FLASK_DEBUG, COSINE_SIMILARITY_THRESHOLD, ENABLE_GAP_VALIDATION
+from face_recognition.quality_checker import user_message_for_reason
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = FLASK_SECRET_KEY
@@ -126,14 +127,17 @@ def recognize():
             threshold = COSINE_SIMILARITY_THRESHOLD
         
         # Generate embedding
-        embedding = encoder.encode_from_array(image_bgr)
-        
+        embedding, qc = encoder.encode_with_qc(image_bgr, mode="lightweight")
+
         if embedding is None:
-            print("[ERROR] No face detected in image")
+            reason = (qc or {}).get("reason", "no_face")
             return jsonify({
                 'success': False,
-                'error': 'No face detected in image'
-            }), 400
+                'error': 'Quality check failed',
+                'reason': reason,
+                'user_message': (qc or {}).get("user_message", user_message_for_reason(reason)),
+                'details': (qc or {}).get("details", {})
+            }), 200
         
         # Check if this is auto-scan mode (from header or parameter)
         is_auto_scan = request.headers.get('X-Auto-Scan', 'false').lower() == 'true' or \
@@ -154,6 +158,11 @@ def recognize():
         
         # Get best match
         best_match = matches[0]
+        qc_details = (qc or {}).get("details", {}) if qc else {}
+
+        pose_warning = bool(qc_details.get("pose_warning", False))
+        confidence_penalty = 0.03 if pose_warning else 0.0
+        adjusted_confidence = max(0.0, float(best_match['confidence']) - confidence_penalty)
         
         # Log similarity scores untuk debugging
         if len(matches) > 1:
@@ -199,19 +208,24 @@ def recognize():
                     'min_required_gap': min_gap_required
                 }), 400
         
-        print(f"[SUCCESS] Recognized: NIM {best_match['nim']} with confidence {best_match['confidence']:.4f}")
+        print(f"[SUCCESS] Recognized: NIM {best_match['nim']} with confidence {adjusted_confidence:.4f}")
         
         # Log recognition
         db.log_recognition(
             nim=best_match['nim'],
-            confidence=best_match['confidence'],
-            status='success' if best_match['confidence'] >= threshold else 'low_confidence'
+            confidence=adjusted_confidence,
+            status='success' if adjusted_confidence >= threshold else 'low_confidence'
         )
         
         return jsonify({
             'success': True,
             'nim': best_match['nim'],
-            'confidence': best_match['confidence'],
+            'confidence': adjusted_confidence,
+            'qc': {
+                'pose_warning': pose_warning,
+                'confidence_penalty': confidence_penalty,
+                'details': qc_details
+            },
             'matches': matches[:5]  # Top 5 matches
         })
         

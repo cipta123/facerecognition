@@ -137,6 +137,31 @@ class FacePreprocessor:
             'kps': result['kps'],
             'det_score': result['det_score']
         }
+
+    def detect_all_faces(self, image: np.ndarray, min_score: float = 0.0) -> List[dict]:
+        """
+        Detect semua wajah (untuk QC / multiple faces check).
+
+        Args:
+            image: BGR image
+            min_score: filter minimal det_score (default 0.0)
+
+        Returns:
+            List of dict: [{'bbox':..., 'kps':..., 'det_score':..., 'face_obj':...}, ...]
+        """
+        faces = self.app.get(image)
+        results: List[dict] = []
+        for f in faces:
+            score = float(getattr(f, "det_score", 0.0))
+            if score < float(min_score):
+                continue
+            results.append({
+                "face_obj": f,
+                "bbox": f.bbox.astype(int),
+                "kps": f.kps if hasattr(f, "kps") else None,
+                "det_score": score,
+            })
+        return results
     
     def get_embedding_direct(self, image: np.ndarray) -> Optional[np.ndarray]:
         """

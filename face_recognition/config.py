@@ -26,6 +26,23 @@ NORMALIZATION_STD = 128.0
 RETINAFACE_CONFIDENCE_THRESHOLD = 0.7  # Naikkan dari 0.5 untuk deteksi lebih akurat
 RETINAFACE_NMS_THRESHOLD = 0.4
 
+# Quality Control Settings
+QC_ENABLED = True
+
+# QC KETAT untuk Database (Batch Encoder / registrasi)
+QC_DB_BLUR_THRESHOLD = 80.0  # Turunkan sedikit agar foto real-world tetap lolos
+QC_DB_MIN_FACE_SIZE_RATIO = 0.05  # Turunkan ke 5% untuk lebih toleran (foto passport biasanya sudah cukup besar)
+QC_DB_MAX_YAW_THRESHOLD = 15  # px (estimasi sederhana dari 5-point kps)
+QC_DB_MIN_DETECTION_CONFIDENCE = 0.65  # Turunkan lagi untuk lebih toleran (foto passport biasanya sudah cukup baik)
+QC_DB_REJECT_MULTIPLE_FACES = True
+
+# QC RINGAN untuk Real-time Recognition (UX friendly)
+QC_RT_BLUR_THRESHOLD = 60.0
+QC_RT_MIN_FACE_SIZE_RATIO = 0.08  # 8% dari area gambar
+QC_RT_MAX_YAW_THRESHOLD = 30  # px
+QC_RT_MIN_DETECTION_CONFIDENCE = 0.7
+QC_RT_REJECT_MULTIPLE_FACES = True
+
 # Matching Settings
 COSINE_SIMILARITY_THRESHOLD = 0.65  # Threshold untuk matching (ArcFace optimal: 0.70-0.75)
 ENABLE_GAP_VALIDATION = False  # Nonaktifkan gap validation (threshold sudah cukup, voting mechanism handle konsistensi)

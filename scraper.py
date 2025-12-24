@@ -440,7 +440,7 @@ class PhotoScraper:
                 print(f"DEBUG: Error extracting blob: {e}")
             return None
     
-    def run(self, csv_path: str = None, manual_login: bool = False, headless: bool = True, debug: bool = False):
+    def run(self, csv_path: str = None, manual_login: bool = False, headless: bool = True, debug: bool = False, force: bool = False):
         """Main scraping loop."""
         self.debug = debug
         # Ensure directories exist
@@ -465,7 +465,9 @@ class PhotoScraper:
         self.progress = load_progress()
         
         # Get pending NIMs (filter completed and existing)
-        pending_nims = get_pending_nims(all_nims, self.progress)
+        if force:
+            print("FORCE MODE: Will re-scrape all NIMs, even if already completed")
+        pending_nims = get_pending_nims(all_nims, self.progress, force=force)
         print(f"Already completed: {len(self.progress['completed'])}")
         print(f"Pending to process: {len(pending_nims)}")
         
@@ -500,7 +502,8 @@ class PhotoScraper:
             with tqdm(total=len(pending_nims), desc="Scraping photos") as pbar:
                 for nim in pending_nims:
                     # Double check if photo exists (in case of parallel runs)
-                    if photo_exists(nim):
+                    # Skip check hanya jika bukan force mode
+                    if not force and photo_exists(nim):
                         add_completed(nim, self.progress)
                         pbar.update(1)
                         continue
@@ -555,6 +558,11 @@ def main():
         action="store_true",
         help="Enable debug mode to see page details"
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force re-scrape all NIMs, even if already completed or photos exist"
+    )
     
     args = parser.parse_args()
     
@@ -568,7 +576,7 @@ def main():
         headless = False  # Manual mode requires visible browser
     
     scraper = PhotoScraper()
-    scraper.run(csv_path=args.csv, manual_login=args.manual, headless=headless, debug=args.debug)
+    scraper.run(csv_path=args.csv, manual_login=args.manual, headless=headless, debug=args.debug, force=args.force)
 
 
 if __name__ == "__main__":

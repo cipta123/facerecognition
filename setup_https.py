@@ -47,6 +47,7 @@ def create_self_signed_cert():
             x509.SubjectAlternativeName([
                 x509.DNSName("localhost"),
                 x509.IPAddress(ipaddress.IPv4Address("127.0.0.1")),
+                x509.IPAddress(ipaddress.IPv4Address("10.22.10.131")),
             ]),
             critical=False,
         ).sign(private_key, hashes.SHA256())

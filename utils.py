@@ -120,11 +120,18 @@ def save_photo(nim: str, image_bytes: bytes) -> bool:
         return False
 
 
-def get_pending_nims(all_nims: List[str], progress: Dict[str, Any]) -> List[str]:
+def get_pending_nims(all_nims: List[str], progress: Dict[str, Any], force: bool = False) -> List[str]:
     """
     Get list of NIMs that still need to be processed.
     Filters out completed NIMs and NIMs with existing photo files.
+    
+    Args:
+        force: If True, ignore completed status and existing photos
     """
+    if force:
+        # Force mode: process all NIMs regardless of status
+        return all_nims
+    
     completed_set = set(progress["completed"])
     pending = []
     

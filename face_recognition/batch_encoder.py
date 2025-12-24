@@ -9,10 +9,12 @@ from pathlib import Path
 from typing import List, Optional
 from tqdm import tqdm
 import argparse
+import numpy as np
 
 from face_recognition.config import PHOTOS_DIR, SUPPORTED_FORMATS
 from face_recognition.encoder import ArcFaceEncoder
 from face_recognition.database import FaceDatabase
+from face_recognition.quality_checker import quality_check_strict, user_message_for_reason
 
 
 class BatchEncoder:
@@ -76,11 +78,21 @@ class BatchEncoder:
                 if existing is not None:
                     return (True, nim, "Already processed (use --force to regenerate)")
             
-            # Generate embedding
-            embedding = self.encoder.encode_from_path(str(photo_path))
-            
+            # Load image + detect faces (sekali), lalu QC ketat sebelum simpan ke DB
+            image_bgr = self.encoder.load_image(str(photo_path))
+            if image_bgr is None:
+                return (False, nim, "Gagal load image")
+
+            faces = self.encoder.detect_faces(image_bgr)
+            ok, reason, details, selected_face = quality_check_strict(image_bgr, faces)
+            if not ok or selected_face is None:
+                msg = user_message_for_reason(reason)
+                return (False, nim, f"QC failed: {reason} - {msg} - {details}")
+
+            embedding = selected_face.normed_embedding
             if embedding is None:
-                return (False, nim, "Gagal generate embedding (no face detected atau error)")
+                return (False, nim, "Gagal generate embedding (no embedding)")
+            embedding = np.array(embedding, dtype=np.float32)
             
             # Save to database (will overwrite if exists)
             success = self.db.save_embedding(nim, embedding, str(photo_path))
@@ -111,6 +123,8 @@ class BatchEncoder:
             'success': 0,
             'failed': 0,
             'skipped': 0,
+            'qc_failed': 0,
+            'qc_errors': [],
             'errors': []
         }
         
@@ -124,17 +138,27 @@ class BatchEncoder:
                     else:
                         stats['skipped'] += 1  # Already exists (and not forced)
                 else:
-                    stats['failed'] += 1
-                    stats['errors'].append({
-                        'nim': nim,
-                        'file': str(photo_path),
-                        'error': error
-                    })
+                    # QC failure: treat separately for debugging dataset quality
+                    if isinstance(error, str) and error.startswith("QC failed:"):
+                        stats['qc_failed'] += 1
+                        stats['qc_errors'].append({
+                            'nim': nim,
+                            'file': str(photo_path),
+                            'error': error
+                        })
+                    else:
+                        stats['failed'] += 1
+                        stats['errors'].append({
+                            'nim': nim,
+                            'file': str(photo_path),
+                            'error': error
+                        })
                 
                 pbar.update(1)
                 pbar.set_postfix({
                     'success': stats['success'],
                     'failed': stats['failed'],
+                    'qc_failed': stats['qc_failed'],
                     'skipped': stats['skipped']
                 })
         
@@ -257,8 +281,16 @@ class BatchEncoder:
         print(f"Total files    : {stats.get('total', 0)}")
         print(f"Success        : {stats.get('success', 0)}")
         print(f"Failed         : {stats.get('failed', 0)}")
+        print(f"QC Failed      : {stats.get('qc_failed', 0)}")
         print(f"Skipped        : {stats.get('skipped', 0)}")
         
+        if stats.get('qc_errors'):
+            print(f"\nQC Failures ({len(stats['qc_errors'])}):")
+            for error in stats['qc_errors'][:10]:
+                print(f"  - {error['nim']}: {error['error']}")
+            if len(stats['qc_errors']) > 10:
+                print(f"  ... dan {len(stats['qc_errors']) - 10} QC failure lainnya")
+
         if stats.get('errors'):
             print(f"\nErrors ({len(stats['errors'])}):")
             for error in stats['errors'][:10]:  # Show first 10 errors

@@ -82,6 +82,12 @@ HTML_TEMPLATE = """
             aspect-ratio: 4/3;
             object-fit: cover;
         }
+        #registerVideo {
+            width: 100%;
+            display: block;
+            aspect-ratio: 4/3; /* Sama dengan home */
+            object-fit: cover; /* Sama dengan home */
+        }
         .face-overlay {
             position: absolute;
             top: 0;
@@ -485,6 +491,286 @@ HTML_TEMPLATE = """
             margin-bottom: 20px;
             line-height: 1.6;
         }
+        /* Bottom Navigation Styles */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #999;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .nav-item:active {
+            transform: scale(0.95);
+        }
+        .nav-item.active {
+            color: #667eea;
+        }
+        .nav-item .icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        .nav-item .label {
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .page-section {
+            display: none;
+            padding-bottom: 70px; /* Space untuk bottom nav */
+        }
+        .page-section.active {
+            display: block;
+        }
+        .app-container {
+            padding-bottom: 70px; /* Space untuk bottom nav */
+        }
+        /* Manual Page Styles */
+        .manual-section {
+            padding: 20px;
+        }
+        .search-form {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .btn-search {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-search:active {
+            transform: scale(0.98);
+        }
+        .student-photo-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        .student-photo {
+            max-width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .student-info {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        /* Register Page Styles */
+        .register-section {
+            padding: 20px;
+        }
+        .register-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding: 0 10px;
+        }
+        .register-step {
+            flex: 1;
+            text-align: center;
+            padding: 12px 16px;
+            background: #f7fafc;
+            color: #718096;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .register-step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -50%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100%;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: -1;
+        }
+        .register-step.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        .register-step.completed {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+        .register-step.completed::after {
+            background: #48bb78;
+        }
+        .register-form {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .photo-preview-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .photo-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .btn-group button {
+            flex: 1;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-group button:active {
+            transform: scale(0.98);
+        }
+        .btn-capture {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+        .btn-upload {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-save {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-save:active {
+            transform: scale(0.98);
+        }
+        .btn-save:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-delete {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+        }
+        .btn-delete:hover {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            box-shadow: 0 6px 20px rgba(245, 101, 101, 0.4);
+        }
+        .btn-delete:active {
+            transform: scale(0.98);
+        }
+        .btn-delete:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .status-message {
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: 500;
+        }
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
         @media (max-width: 480px) {
             .app-container {
                 max-width: 100%;
@@ -503,18 +789,26 @@ HTML_TEMPLATE = """
 </head>
 <body>
     <div class="app-container">
-        <div class="header">
-            <h1>🔐 Face Recognition</h1>
-            <div class="subtitle">Verifikasi Ujian</div>
-        </div>
-        
-        <div class="camera-section">
+        <!-- Home Page -->
+        <div id="page-home" class="page-section active">
+            <div class="header">
+                <h1>🔐 Face Recognition</h1>
+                <div class="subtitle">Verifikasi Ujian</div>
+            </div>
+            
+            <div class="camera-section">
             <div class="scanning-indicator" id="scanningIndicator">🔍 Scanning...</div>
             <div class="video-container">
-                <video id="video" autoplay playsinline></video>
+                <video id="video" autoplay playsinline muted></video>
                 <canvas class="face-overlay" id="faceOverlay"></canvas>
                 <div class="progress-overlay" id="progressOverlay">
                     <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <!-- Floating button untuk toggle camera di dalam video container -->
+                <div style="position: absolute; bottom: 15px; right: 15px; z-index: 10;">
+                    <button class="btn-main" id="homeCameraBtn" onclick="toggleHomeCamera()" style="background: rgba(0,0,0,0.6); color: white; border: 2px solid white; padding: 12px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s;">
+                        <span style="font-size: 20px;" id="homeCameraIcon">📱</span>
+                    </button>
                 </div>
             </div>
             <canvas id="canvas" class="hidden"></canvas>
@@ -543,46 +837,158 @@ HTML_TEMPLATE = """
                     </div>
                 </div>
                 
-                <div class="control-group">
-                    <div class="control-label">Kamera</div>
-                    <div class="btn-frame">
-                        <button class="btn-main" id="cameraBtn" onclick="toggleDropdown('camera')">
-                            <span class="icon">📹</span>
-                            <span class="text" id="cameraText">Kamera Depan</span>
-                            <span class="arrow">▼</span>
-                        </button>
-                        <div class="dropdown-menu" id="cameraMenu">
-                            <div class="dropdown-item" onclick="selectCamera('front')">
-                                <span class="icon">📱</span>
-                                <span>Kamera Depan</span>
-                            </div>
-                            <div class="dropdown-item" onclick="selectCamera('back')">
-                                <span class="icon">📷</span>
-                                <span>Kamera Belakang</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="control-group">
-                    <div class="control-label">Upload Foto</div>
-                    <div class="btn-frame">
-                        <button class="btn-main success" onclick="document.getElementById('fileInput').click()">
-                            <span class="icon">📁</span>
-                            <span class="text">Pilih File dari Galeri</span>
-                            <span class="arrow">→</span>
-                        </button>
-                        <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)" class="hidden">
-                    </div>
-                </div>
             </div>
         </div>
         
-        <div class="loading" id="loading">
-            <div class="loading-spinner"></div>
-            <p>Memproses foto...</p>
+            <div class="loading" id="loading">
+                <div class="loading-spinner"></div>
+                <p>Memproses foto...</p>
+            </div>
+        </div>
+        
+        <!-- Manual Page -->
+        <div id="page-manual" class="page-section">
+            <div class="header">
+                <h1>🔍 Cari Mahasiswa</h1>
+                <div class="subtitle">Masukkan NIM</div>
+            </div>
+            
+            <div class="manual-section">
+                <div class="search-form">
+                    <div class="form-group">
+                        <label class="form-label" for="nimInput">NIM Mahasiswa</label>
+                        <input type="text" id="nimInput" class="form-input" placeholder="Masukkan NIM" />
+                    </div>
+                    <button class="btn-search" onclick="searchByNIM()">🔍 Cari Mahasiswa</button>
+                </div>
+                
+                <div id="studentResult" style="display: none;">
+                    <div class="student-photo-container">
+                        <img id="studentPhoto" class="student-photo" src="" alt="Foto Mahasiswa" />
+                        <div class="student-info" id="studentInfo"></div>
+                    </div>
+                </div>
+                
+                <div id="studentError" class="error-message" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Register Page -->
+        <div id="page-register" class="page-section">
+            <div class="header">
+                <h1>📝 Registrasi Mahasiswa</h1>
+                <div class="subtitle">Tambah Foto Baru</div>
+            </div>
+            
+            <div class="register-section">
+                <!-- Step Indicator -->
+                <div class="register-steps">
+                    <span class="register-step active" data-step="1">1. NIM</span>
+                    <span class="register-step" data-step="2">2. Capture</span>
+                    <span class="register-step" data-step="3">3. Simpan</span>
+                </div>
+                
+                <!-- Video Preview dengan Face Detection -->
+                <div class="video-container" id="registerVideoContainer">
+                    <video id="registerVideo" autoplay playsinline muted></video>
+                    <canvas class="face-overlay" id="registerFaceOverlay"></canvas>
+                    <div class="progress-overlay" id="registerProgressOverlay">
+                        <div class="progress-bar" id="registerProgressBar"></div>
+                    </div>
+                    <!-- Floating buttons di dalam video container -->
+                    <div style="position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; z-index: 10;">
+                        <button class="btn-main" id="registerCameraBtn" onclick="toggleRegisterCamera()" style="background: rgba(0,0,0,0.6); color: white; border: 2px solid white; padding: 12px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s;">
+                            <span style="font-size: 20px;" id="registerCameraIcon">📱</span>
+                        </button>
+                        <button class="btn-main" id="registerManualCaptureBtn" onclick="manualCaptureRegister()" style="background: rgba(72, 187, 120, 0.9); color: white; border: 2px solid white; padding: 12px; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);">
+                            <span style="font-size: 20px;">📸</span>
+                        </button>
+                    </div>
+                </div>
+                <canvas id="registerCanvas" class="hidden"></canvas>
+                
+                <!-- Status Indicator -->
+                <div class="status-info" id="registerStatusInfo">Mencari wajah...</div>
+                
+                <!-- Form NIM -->
+                <div class="register-form">
+                    <div class="form-group">
+                        <label class="form-label" for="registerNIMInput">NIM Mahasiswa</label>
+                        <input type="text" id="registerNIMInput" class="form-input" placeholder="Masukkan NIM" />
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button class="btn-upload" id="btnUploadPhoto" onclick="document.getElementById('registerFileInput').click()" style="display: none;">📁 Upload Foto</button>
+                        <button class="btn-main" id="btnToggleUpload" onclick="toggleUploadButton()" style="background: rgba(0, 0, 0, 0.05); color: #666; border: 1px solid rgba(0, 0, 0, 0.1); padding: 8px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.3s;">
+                            <span style="font-size: 18px; vertical-align: middle;">⋯</span> <span style="margin-left: 5px; vertical-align: middle;">Lainnya</span>
+                        </button>
+                        <input type="file" id="registerFileInput" accept="image/*" onchange="uploadPhotoForRegister(event)" class="hidden">
+                    </div>
+                </div>
+                
+                <div id="registerStatus" class="status-message" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Admin Page -->
+        <div id="page-admin" class="page-section">
+            <div class="header">
+                <h1>⚙️ Admin</h1>
+                <div class="subtitle">Hapus NIM dari Database</div>
+            </div>
+            
+            <div class="register-section">
+                <div class="register-form">
+                    <div class="form-group">
+                        <label class="form-label" for="adminNIMInput">NIM yang akan dihapus</label>
+                        <input type="text" id="adminNIMInput" class="form-input" placeholder="Masukkan NIM" />
+                    </div>
+                    
+                    <button class="btn-delete" id="btnDeleteNIM" onclick="deleteNIM()" style="width: 100%; margin-top: 20px;">
+                        🗑️ Hapus NIM dari Database
+                    </button>
+                </div>
+                
+                <div id="adminStatus" class="status-message" style="display: none; margin-top: 20px;"></div>
+            </div>
         </div>
     </div>
+    
+    <!-- Register Photo Modal -->
+    <div class="modal-overlay" id="registerModalOverlay" onclick="closeRegisterModalOutside(event)">
+        <div class="modal-content" id="registerModalContent">
+            <button class="modal-close" onclick="closeRegisterModal()">&times;</button>
+            <div class="modal-icon success">📸</div>
+            <h2 class="modal-title">Foto Berhasil Di-capture</h2>
+            <div id="registerModalPreview" style="margin: 20px 0;">
+                <img id="registerModalImg" style="max-width: 100%; max-height: 300px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);" src="" alt="Preview Foto" />
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="modal-btn" onclick="retryRegisterCapture()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); flex: 1;">🔄 Capture Ulang</button>
+                <button class="modal-btn success" onclick="saveRegisterPhoto()" style="flex: 1;">💾 Simpan ke Database</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" data-page="home" onclick="showPage('home')">
+            <div class="icon">🏠</div>
+            <div class="label">Home</div>
+        </div>
+        <div class="nav-item" data-page="manual" onclick="showPage('manual')">
+            <div class="icon">🔍</div>
+            <div class="label">Manual</div>
+        </div>
+        <div class="nav-item" data-page="register" onclick="showPage('register')">
+            <div class="icon">📝</div>
+            <div class="label">Register</div>
+        </div>
+        <div class="nav-item" data-page="admin" onclick="showPage('admin')">
+            <div class="icon">⚙️</div>
+            <div class="label">Admin</div>
+        </div>
+    </nav>
     
     <!-- POPUP MODAL -->
     <div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
@@ -687,28 +1093,10 @@ HTML_TEMPLATE = """
             activeDropdown = null;
         }
         
-        // Select camera
-        function selectCamera(camera) {
-            const btn = document.getElementById('cameraBtn');
-            const text = document.getElementById('cameraText');
-            const menu = document.getElementById('cameraMenu');
-            const facingMode = camera === 'front' ? 'user' : 'environment';
-            
-            if (camera === 'front') {
-                text.textContent = 'Kamera Depan';
-                btn.querySelector('.icon').textContent = '📱';
-            } else {
-                text.textContent = 'Kamera Belakang';
-                btn.querySelector('.icon').textContent = '📷';
-            }
-            
-            // Switch camera
-            startCamera(facingMode);
-            
-            // Close dropdown
-            menu.classList.remove('active');
-            btn.classList.remove('active');
-            activeDropdown = null;
+        // Toggle camera untuk home (menggunakan floating button)
+        function toggleHomeCamera() {
+            const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            startCamera(newFacingMode);
         }
         
         // Start camera
@@ -753,22 +1141,43 @@ HTML_TEMPLATE = """
                 });
                 const video = document.getElementById('video');
                 video.srcObject = stream;
+                video.muted = true; // Required for Chrome autoplay
                 currentFacingMode = facingMode;
                 
-                // Update camera button text
-                const cameraText = document.getElementById('cameraText');
-                const cameraIcon = document.getElementById('cameraBtn').querySelector('.icon');
-                if (facingMode === 'user') {
-                    cameraText.textContent = 'Kamera Depan';
-                    cameraIcon.textContent = '📱';
-                } else {
-                    cameraText.textContent = 'Kamera Belakang';
-                    cameraIcon.textContent = '📷';
+                // Update camera button icon (floating button di dalam video container)
+                const cameraIcon = document.getElementById('homeCameraIcon');
+                if (cameraIcon) {
+                    cameraIcon.textContent = facingMode === 'user' ? '📱' : '📷';
+                }
+                
+                // Chrome requires explicit play() call
+                try {
+                    await video.play();
+                } catch (playErr) {
+                    console.warn('Video play() failed:', playErr);
+                    // Try again after a short delay
+                    setTimeout(async () => {
+                        try {
+                            await video.play();
+                        } catch (e) {
+                            console.error('Video play() retry failed:', e);
+                        }
+                    }, 100);
                 }
                 
                 // Wait for video to be ready
-                video.onloadedmetadata = () => {
+                video.onloadedmetadata = async () => {
                     console.log('Video ready:', video.videoWidth, 'x', video.videoHeight, 'facingMode:', facingMode);
+                    
+                    // Ensure video is playing (Chrome requirement)
+                    try {
+                        if (video.paused) {
+                            await video.play();
+                        }
+                    } catch (playErr) {
+                        console.warn('Video play() in onloadedmetadata failed:', playErr);
+                    }
+                    
                     const statusInfo = document.getElementById('statusInfo');
                     statusInfo.textContent = '✅ Kamera siap - Pilih mode scanning';
                     statusInfo.style.background = 'rgba(72, 187, 120, 0.1)';
@@ -787,19 +1196,36 @@ HTML_TEMPLATE = """
                 };
             } catch (err) {
                 console.error('Error accessing camera:', err);
+                console.error('Error details:', {
+                    name: err.name,
+                    message: err.message,
+                    constraint: err.constraint
+                });
+                
                 const video = document.getElementById('video');
-                video.style.display = 'none';
-                const errorMsg = document.createElement('div');
-                errorMsg.style.cssText = 'background: #f8d7da; border: 2px solid #dc3545; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center;';
-                errorMsg.innerHTML = `
-                    <h3 style="color: #721c24; margin-bottom: 10px;">Kamera Tidak Tersedia</h3>
-                    <p style="color: #721c24; margin-bottom: 15px;">
-                        ${err.name === 'NotAllowedError' ? 'Izin kamera ditolak. Berikan izin di pengaturan browser.' : 
-                          err.name === 'NotFoundError' ? 'Tidak ada kamera yang terdeteksi.' : 
-                          'Tidak dapat mengakses kamera. Gunakan opsi Upload Foto.'}
-                    </p>
-                `;
-                document.querySelector('.camera-section').insertBefore(errorMsg, document.querySelector('.controls'));
+                const statusInfo = document.getElementById('statusInfo');
+                
+                let errorMessage = 'Tidak dapat mengakses kamera.';
+                if (err.name === 'NotAllowedError') {
+                    errorMessage = '❌ Izin kamera ditolak. Klik icon 🔒 di address bar dan izinkan akses kamera.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMessage = '❌ Tidak ada kamera yang terdeteksi.';
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    errorMessage = '❌ Kamera sedang digunakan aplikasi lain. Tutup aplikasi lain yang menggunakan kamera.';
+                } else if (err.name === 'OverconstrainedError') {
+                    errorMessage = '❌ Kamera tidak mendukung mode yang diminta.';
+                } else {
+                    errorMessage = `❌ Error: ${err.message || err.name}`;
+                }
+                
+                if (statusInfo) {
+                    statusInfo.textContent = errorMessage;
+                    statusInfo.style.background = 'rgba(245, 101, 101, 0.1)';
+                    statusInfo.style.color = '#f56565';
+                }
+                
+                // Show error in console for debugging
+                console.error('Camera access failed:', errorMessage);
             }
         }
         
@@ -1065,6 +1491,14 @@ HTML_TEMPLATE = """
             if (e.key === 'Enter' && modalShown) {
                 closeModal();
             }
+            
+            // Keyboard support untuk register modal
+            const registerModal = document.getElementById('registerModalOverlay');
+            if (registerModal && registerModal.classList.contains('active')) {
+                if (e.key === 'Escape') {
+                    closeRegisterModal();
+                }
+            }
         });
         
         // Send image to API
@@ -1194,13 +1628,14 @@ HTML_TEMPLATE = """
                     }
                 } else {
                     // Error atau tidak ada match
+                    const msg = data.user_message || data.error || 'Tidak dapat mengenali wajah';
                     if (!isAutoScan) {
-                        showModal(false, '', 0, data.error || 'Tidak dapat mengenali wajah');
-                        statusInfo.textContent = '❌ ' + (data.error || 'Wajah tidak dikenali');
+                        showModal(false, '', 0, msg);
+                        statusInfo.textContent = '❌ ' + msg;
                         statusInfo.style.background = 'rgba(245, 101, 101, 0.1)';
                         statusInfo.style.color = '#f56565';
                     } else {
-                        statusInfo.textContent = '❌ ' + (data.error || 'Wajah tidak dikenali');
+                        statusInfo.textContent = '❌ ' + msg;
                         statusInfo.style.background = 'rgba(245, 101, 101, 0.1)';
                         statusInfo.style.color = '#f56565';
                     }
@@ -1515,10 +1950,1257 @@ HTML_TEMPLATE = """
                 // stream.getTracks().forEach(track => track.stop());
             }
         });
+        
+        // ==================== ROUTING SYSTEM ====================
+        let currentPage = 'home';
+        
+        function showPage(page) {
+            // Hide all pages
+            document.querySelectorAll('.page-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected page
+            const targetSection = document.getElementById(`page-${page}`);
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            // Update nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const navItem = document.querySelector(`[data-page="${page}"]`);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+            
+            currentPage = page;
+            
+            // Stop auto scan jika pindah dari home page
+            if (page !== 'home' && isAutoScanning) {
+                toggleAutoScan();
+            }
+            
+            
+            // Stop register camera stream jika pindah dari register page
+            if (page !== 'register') {
+                const registerVideo = document.getElementById('registerVideo');
+                if (registerVideo && registerVideo.srcObject) {
+                    // Stop tracks dari register video stream
+                    const registerStream = registerVideo.srcObject;
+                    if (registerStream && registerStream.getTracks) {
+                        registerStream.getTracks().forEach(track => track.stop());
+                    }
+                    registerVideo.srcObject = null;
+                }
+                // Clear global stream variable jika itu stream dari register
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+            }
+            
+            // Start camera jika pindah ke home atau register page
+            if (page === 'home' || page === 'register') {
+                // Use same video element for both pages, or create separate for register
+                if (page === 'register') {
+                    startRegisterCamera();
+                } else {
+                    // Always start camera for home page (stream sudah di-clear di atas)
+                    startCamera();
+                }
+            }
+        }
+        
+        // Start camera untuk Register page - menggunakan kode yang sama dengan home
+        async function startRegisterCamera(facingMode = 'user') {
+            // Gunakan startCamera() yang sama, lalu assign ke registerVideo
+            try {
+                // Check if running on HTTPS or localhost
+                const isSecure = window.location.protocol === 'https:' || 
+                                window.location.hostname === 'localhost' || 
+                                window.location.hostname === '127.0.0.1';
+                
+                if (!isSecure && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+                    updateRegisterStatus('⚠️ Kamera memerlukan HTTPS');
+                    return;
+                }
+                
+                // Get register video element
+                const registerVideo = document.getElementById('registerVideo');
+                if (!registerVideo) {
+                    updateRegisterStatus('❌ Video element tidak ditemukan');
+                    return;
+                }
+                
+                // Stop existing stream if any
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                
+                // Stop face detection sementara saat switch camera
+                stopRegisterFaceDetection();
+                
+                // Gunakan stream yang sama dengan home (tidak perlu portrait khusus)
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: facingMode,
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                
+                registerVideo.srcObject = stream;
+                registerVideo.muted = true; // Required for Chrome autoplay
+                currentFacingMode = facingMode;
+                
+                // Update camera button icon
+                const cameraIcon = document.getElementById('registerCameraIcon');
+                if (cameraIcon) {
+                    cameraIcon.textContent = facingMode === 'user' ? '📱' : '📷';
+                }
+                
+                // Chrome requires explicit play() call
+                try {
+                    await registerVideo.play();
+                } catch (playErr) {
+                    console.warn('Register video play() failed:', playErr);
+                    // Try again after a short delay
+                    setTimeout(async () => {
+                        try {
+                            await registerVideo.play();
+                        } catch (e) {
+                            console.error('Register video play() retry failed:', e);
+                        }
+                    }, 100);
+                }
+                
+                // Wait for video to be ready
+                registerVideo.onloadedmetadata = async () => {
+                    console.log('Register video ready:', registerVideo.videoWidth, 'x', registerVideo.videoHeight);
+                    
+                    // Ensure video is playing (Chrome requirement)
+                    try {
+                        if (registerVideo.paused) {
+                            await registerVideo.play();
+                        }
+                    } catch (playErr) {
+                        console.warn('Register video play() in onloadedmetadata failed:', playErr);
+                    }
+                    
+                    updateRegisterStatus('✅ Kamera siap');
+                    
+                    // Update overlay size
+                    updateRegisterOverlaySize();
+                    
+                    // Start face detection otomatis (sama seperti home)
+                    startRegisterFaceDetection();
+                    
+                    // Start periodic overlay size updates
+                    if (window.registerOverlayUpdateInterval) {
+                        clearInterval(window.registerOverlayUpdateInterval);
+                    }
+                    window.registerOverlayUpdateInterval = setInterval(updateRegisterOverlaySize, 500);
+                };
+                
+                // Also update on resize
+                registerVideo.addEventListener('resize', () => {
+                    updateRegisterOverlaySize();
+                });
+            } catch (err) {
+                console.error('Error accessing camera for register:', err);
+                console.error('Error details:', {
+                    name: err.name,
+                    message: err.message,
+                    constraint: err.constraint
+                });
+                
+                let errorMessage = 'Tidak dapat mengakses kamera.';
+                if (err.name === 'NotAllowedError') {
+                    errorMessage = '❌ Izin kamera ditolak. Klik icon 🔒 di address bar dan izinkan akses kamera.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMessage = '❌ Tidak ada kamera yang terdeteksi.';
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    errorMessage = '❌ Kamera sedang digunakan aplikasi lain. Tutup aplikasi lain yang menggunakan kamera.';
+                } else if (err.name === 'OverconstrainedError') {
+                    errorMessage = '❌ Kamera tidak mendukung mode yang diminta.';
+                } else {
+                    errorMessage = `❌ Error: ${err.message || err.name}`;
+                }
+                
+                updateRegisterStatus(errorMessage);
+            }
+        }
+        
+        // Toggle camera untuk register
+        function toggleRegisterCamera() {
+            const newFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            startRegisterCamera(newFacingMode);
+        }
+        
+        // Toggle visibility tombol upload foto
+        function toggleUploadButton() {
+            const btnUpload = document.getElementById('btnUploadPhoto');
+            const btnToggle = document.getElementById('btnToggleUpload');
+            
+            if (btnUpload && btnToggle) {
+                const isHidden = btnUpload.style.display === 'none' || btnUpload.style.display === '';
+                
+                if (isHidden) {
+                    // Tampilkan tombol upload
+                    btnUpload.style.display = 'inline-block';
+                    btnToggle.innerHTML = '<span style="font-size: 18px; vertical-align: middle;">▲</span> <span style="margin-left: 5px; vertical-align: middle;">Sembunyikan</span>';
+                    btnToggle.style.background = 'rgba(0, 0, 0, 0.05)';
+                } else {
+                    // Sembunyikan tombol upload
+                    btnUpload.style.display = 'none';
+                    btnToggle.innerHTML = '<span style="font-size: 18px; vertical-align: middle;">⋯</span> <span style="margin-left: 5px; vertical-align: middle;">Lainnya</span>';
+                    btnToggle.style.background = 'rgba(0, 0, 0, 0.05)';
+                }
+            }
+        }
+        
+        // Manual capture untuk register
+        async function manualCaptureRegister() {
+            const registerVideo = document.getElementById('registerVideo');
+            const registerCanvas = document.getElementById('registerCanvas');
+            
+            if (!registerVideo || !registerVideo.videoWidth || !registerVideo.videoHeight) {
+                updateRegisterStatus('❌ Video belum siap');
+                return;
+            }
+            
+            // Validate NIM first
+            if (!validateNIM()) {
+                return;
+            }
+            
+            try {
+                // Capture frame
+                const ctx = registerCanvas.getContext('2d');
+                registerCanvas.width = registerVideo.videoWidth;
+                registerCanvas.height = registerVideo.videoHeight;
+                ctx.drawImage(registerVideo, 0, 0);
+                
+                // Convert to blob
+                registerCanvas.toBlob((blob) => {
+                    if (blob) {
+                        registerPhotoBlob = blob;
+                        registerPhotoFile = null;
+                        registerPhotoCaptured = true;
+                        registerBestFrameBlob = null;
+                        registerReadyHistory = [];
+                        
+                        setRegisterState(RegisterState.CAPTURED);
+                        showRegisterModal(blob);
+                        updateRegisterStatus('✅ Foto siap - Klik Simpan ke Database');
+                    }
+                }, 'image/jpeg', 0.95);
+            } catch (err) {
+                console.error('Error capturing photo:', err);
+                updateRegisterStatus('❌ Gagal mengambil foto: ' + err.message);
+            }
+        }
+        
+        function updateRegisterOverlaySize() {
+            const registerVideo = document.getElementById('registerVideo');
+            const overlay = document.getElementById('registerFaceOverlay');
+            
+            if (registerVideo && overlay) {
+                // Get actual displayed video size (bukan container size)
+                // Karena object-fit: contain, video mungkin lebih kecil dari container
+                const videoRect = registerVideo.getBoundingClientRect();
+                const videoAspect = registerVideo.videoWidth / registerVideo.videoHeight;
+                const containerAspect = videoRect.width / videoRect.height;
+                
+                let overlayWidth, overlayHeight;
+                
+                if (videoAspect > containerAspect) {
+                    // Video lebih lebar, fit to width
+                    overlayWidth = videoRect.width;
+                    overlayHeight = videoRect.width / videoAspect;
+                } else {
+                    // Video lebih tinggi, fit to height
+                    overlayHeight = videoRect.height;
+                    overlayWidth = videoRect.height * videoAspect;
+                }
+                
+                overlay.width = overlayWidth;
+                overlay.height = overlayHeight;
+                
+                // Center overlay
+                overlay.style.position = 'absolute';
+                overlay.style.left = ((videoRect.width - overlayWidth) / 2) + 'px';
+                overlay.style.top = ((videoRect.height - overlayHeight) / 2) + 'px';
+            }
+        }
+        
+        // ==================== MANUAL PAGE FUNCTIONS ====================
+        async function searchByNIM() {
+            const nimInput = document.getElementById('nimInput');
+            const nim = nimInput.value.trim();
+            const resultDiv = document.getElementById('studentResult');
+            const errorDiv = document.getElementById('studentError');
+            const photoImg = document.getElementById('studentPhoto');
+            const infoDiv = document.getElementById('studentInfo');
+            
+            // Hide previous results
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            
+            if (!nim) {
+                errorDiv.textContent = 'Silakan masukkan NIM';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/student/${nim}`);
+                const data = await response.json();
+                
+                if (data.success && data.exists) {
+                    // Display photo
+                    photoImg.src = data.photo_url || `/api/photo/${nim}`;
+                    infoDiv.textContent = `NIM: ${data.nim}`;
+                    resultDiv.style.display = 'block';
+                } else {
+                    errorDiv.textContent = data.message || `Mahasiswa dengan NIM ${nim} tidak ditemukan`;
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error searching student:', error);
+                errorDiv.textContent = 'Terjadi kesalahan saat mencari mahasiswa';
+                errorDiv.style.display = 'block';
+            }
+        }
+        
+        // Allow Enter key to search
+        document.addEventListener('DOMContentLoaded', () => {
+            const nimInput = document.getElementById('nimInput');
+            if (nimInput) {
+                nimInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        searchByNIM();
+                    }
+                });
+            }
+        });
+        
+        // ==================== REGISTER PAGE FUNCTIONS ====================
+        // State Machine
+        const RegisterState = {
+            IDLE: "idle",
+            SCANNING: "scanning",
+            CAPTURED: "captured",
+            SAVING: "saving",
+            SUCCESS: "success",
+            ERROR: "error"
+        };
+        
+        let registerState = RegisterState.IDLE;
+        
+        function setRegisterState(state) {
+            registerState = state;
+            console.log("[REGISTER STATE]", state);
+            updateRegisterButtons();
+            updateRegisterStepIndicator();
+        }
+        
+        function updateRegisterButtons() {
+            // Note: btnSaveRegister is in modal, will be handled separately
+        }
+        
+        function updateRegisterStepIndicator() {
+            const steps = document.querySelectorAll('.register-step');
+            steps.forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                
+                if (registerState === RegisterState.IDLE) {
+                    if (index === 0) step.classList.add('active');
+                } else if (registerState === RegisterState.SCANNING) {
+                    if (index === 1) step.classList.add('active');
+                    if (index === 0) step.classList.add('completed');
+                } else if (registerState === RegisterState.CAPTURED) {
+                    if (index === 2) step.classList.add('active');
+                    if (index < 2) step.classList.add('completed');
+                } else if (registerState === RegisterState.SAVING) {
+                    if (index === 2) step.classList.add('active');
+                    if (index < 2) step.classList.add('completed');
+                } else if (registerState === RegisterState.SUCCESS) {
+                    step.classList.add('completed');
+                }
+            });
+        }
+        
+        let registerPhotoBlob = null;
+        let registerPhotoFile = null;
+        let registerQCCheckLoop = null;
+        let registerPhotoCaptured = false;
+        
+        // Liveness Detection State
+        let registerFaceHistory = []; // Track face positions untuk motion detection
+        let registerBlinkHistory = []; // Track eye landmarks untuk blink detection
+        let registerMotionDetected = false;
+        let registerBlinkDetected = false;
+        const REGISTER_FACE_HISTORY_MAX = 10;
+        const REGISTER_MOTION_THRESHOLD = 10; // pixels
+        const REGISTER_BLINK_THRESHOLD = 0.15; // ratio change
+        
+        // Temporal Smoothing untuk Register (sama seperti Home page)
+        let lastRegisterFaceData = null;
+        let lastRegisterFaceTime = 0;
+        const REGISTER_FACE_TIMEOUT = 800; // ms: keep last box for a short time (sama dengan home)
+        
+        // Voting mechanism untuk auto-capture (harus pass beberapa kali berturut-turut)
+        let registerReadyHistory = []; // Track ready states (QC + liveness pass)
+        const REGISTER_READY_VOTES_REQUIRED = 3; // Harus pass 3 kali berturut-turut
+        
+        // Store best frame untuk capture (frame terakhir yang pass semua check)
+        let registerBestFrameBlob = null;
+        
+        
+        // Start face detection untuk register - sama persis dengan home
+        function startRegisterFaceDetection() {
+            // Stop existing detection
+            stopRegisterFaceDetection();
+            
+            let lastDetectionTime = 0;
+            const DETECTION_INTERVAL = 100; // 100ms = 10 FPS untuk detection (lebih smooth)
+            
+            // Use requestAnimationFrame untuk lebih smooth
+            function detectLoop() {
+                // Pastikan loop terus berjalan - tidak ada kondisi yang membuatnya berhenti
+                const overlay = document.getElementById('registerFaceOverlay');
+                const registerVideo = document.getElementById('registerVideo');
+                
+                // Cek apakah masih di register page dan video masih aktif
+                if (!registerVideo || !registerVideo.videoWidth || !registerVideo.videoHeight) {
+                    // Video tidak ready, tunggu sebentar lalu coba lagi
+                    registerQCCheckLoop = requestAnimationFrame(detectLoop);
+                    return;
+                }
+                
+                // Update overlay size secara berkala (sama seperti home)
+                if (overlay) {
+                    updateRegisterOverlaySize();
+                }
+                
+                const now = Date.now();
+                
+                // Always render last known face box to avoid flicker (even if no new detection yet)
+                if (overlay && registerVideo && lastRegisterFaceData && (now - lastRegisterFaceTime) < REGISTER_FACE_TIMEOUT) {
+                    drawRegisterFaceBox(lastRegisterFaceData, registerVideo, overlay);
+                } else if (overlay && lastRegisterFaceData && (now - lastRegisterFaceTime) >= REGISTER_FACE_TIMEOUT) {
+                    // Only clear after timeout (not per-frame)
+                    clearRegisterFaceBox(overlay);
+                    lastRegisterFaceData = null;
+                }
+                
+                // Run detection requests periodically - terus berjalan tanpa kondisi yang menghentikan
+                // Tidak ada kondisi yang membuat detection berhenti - terus berjalan seperti di home
+                if (now - lastDetectionTime >= DETECTION_INTERVAL && !isDetecting) {
+                    lastDetectionTime = now;
+                    detectRegisterFaceInFrame();
+                }
+                
+                // Pastikan loop terus berjalan - tidak pernah berhenti
+                registerQCCheckLoop = requestAnimationFrame(detectLoop);
+            }
+            
+            registerQCCheckLoop = requestAnimationFrame(detectLoop);
+        }
+        
+        function stopRegisterFaceDetection() {
+            if (registerQCCheckLoop) {
+                cancelAnimationFrame(registerQCCheckLoop);
+                registerQCCheckLoop = null;
+            }
+            isDetecting = false;
+            const overlay = document.getElementById('registerFaceOverlay');
+            clearRegisterFaceBox(overlay);
+            lastRegisterFaceData = null;
+            lastRegisterFaceTime = 0;
+        }
+        
+        // Detect face in register frame - sama persis dengan home
+        async function detectRegisterFaceInFrame() {
+            const registerVideo = document.getElementById('registerVideo');
+            const registerCanvas = document.getElementById('registerCanvas');
+            const overlay = document.getElementById('registerFaceOverlay');
+            
+            // Skip if video not ready or still processing
+            if (!registerVideo || !registerVideo.videoWidth || !registerVideo.videoHeight || isDetecting) {
+                return;
+            }
+            
+            isDetecting = true;
+            
+            try {
+                // OPTIMIZATION: Resize canvas untuk detection lebih cepat
+                // Detection tidak perlu full resolution, cukup 320x240 atau max 640px
+                const maxSize = 640;
+                let canvasWidth = registerVideo.videoWidth;
+                let canvasHeight = registerVideo.videoHeight;
+                let scale = 1;
+                
+                if (canvasWidth > maxSize || canvasHeight > maxSize) {
+                    scale = Math.min(maxSize / canvasWidth, maxSize / canvasHeight);
+                    canvasWidth = Math.floor(canvasWidth * scale);
+                    canvasHeight = Math.floor(canvasHeight * scale);
+                }
+                
+                // Draw video frame to canvas (resized)
+                const ctx = registerCanvas.getContext('2d');
+                registerCanvas.width = canvasWidth;
+                registerCanvas.height = canvasHeight;
+                ctx.drawImage(registerVideo, 0, 0, canvasWidth, canvasHeight);
+                
+                // Convert to blob with lower quality untuk lebih cepat
+                registerCanvas.toBlob(async (blob) => {
+                    if (!blob) {
+                        isDetecting = false;
+                        return;
+                    }
+                    
+                    try {
+                        const formData = new FormData();
+                        formData.append('image', blob, 'frame.jpg');
+                        // Send original dimensions untuk scale bbox
+                        formData.append('width', registerVideo.videoWidth);
+                        formData.append('height', registerVideo.videoHeight);
+                        
+                        const response = await fetch('/detect-face', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.success && data.face) {
+                                // Update persistence state
+                                lastRegisterFaceData = data.face;
+                                lastRegisterFaceTime = Date.now();
+                                drawRegisterFaceBox(lastRegisterFaceData, registerVideo, overlay);
+                            } else {
+                                // Do NOT clear immediately; keep last box for FACE_TIMEOUT
+                                // (render loop will handle clearing after timeout)
+                            }
+                        } else {
+                            // Do NOT clear immediately on a single failed request
+                        }
+                    } catch (err) {
+                        // Silently fail - keep last box (avoid flicker)
+                    } finally {
+                        isDetecting = false;
+                    }
+                }, 'image/jpeg', 0.7); // Lower quality (0.7) untuk lebih cepat
+            } catch (err) {
+                isDetecting = false;
+            }
+        }
+        
+        async function checkRegisterFrameQC() {
+            const registerVideo = document.getElementById('registerVideo');
+            const registerCanvas = document.getElementById('registerCanvas');
+            
+            if (!registerVideo || !registerVideo.videoWidth || !registerVideo.videoHeight) {
+                return;
+            }
+            
+            try {
+                // Capture frame
+                const ctx = registerCanvas.getContext('2d');
+                registerCanvas.width = registerVideo.videoWidth;
+                registerCanvas.height = registerVideo.videoHeight;
+                ctx.drawImage(registerVideo, 0, 0);
+                
+                // Convert to blob
+                registerCanvas.toBlob(async (blob) => {
+                    if (!blob) return;
+                    
+                    try {
+                        // First, detect face untuk visual feedback
+                        const detectFormData = new FormData();
+                        detectFormData.append('image', blob, 'frame.jpg');
+                        detectFormData.append('width', registerVideo.videoWidth);
+                        detectFormData.append('height', registerVideo.videoHeight);
+                        
+                        const detectResponse = await fetch('/detect-face', {
+                            method: 'POST',
+                            body: detectFormData
+                        });
+                        
+                        if (detectResponse.ok) {
+                            const detectData = await detectResponse.json();
+                            if (detectData.success && detectData.face) {
+                                // Update temporal smoothing state
+                                lastRegisterFaceData = detectData.face;
+                                lastRegisterFaceTime = Date.now();
+                                
+                                // Draw face box (will be rendered in detection loop)
+                                
+                                // Update liveness detection
+                                updateLivenessDetection(detectData.face);
+                                
+                                // Check QC jika face detected
+                                const qcFormData = new FormData();
+                                qcFormData.append('image', blob, 'frame.jpg');
+                                
+                                const qcResponse = await fetch('/api/check-qc', {
+                                    method: 'POST',
+                                    body: qcFormData
+                                });
+                                
+                                if (qcResponse.ok) {
+                                    const qcData = await qcResponse.json();
+                                    
+                                    if (qcData.qc_pass) {
+                                        // Check liveness
+                                        if (registerMotionDetected && registerBlinkDetected) {
+                                            // Both QC and liveness passed - add to voting history
+                                            registerReadyHistory.push(true);
+                                            if (registerReadyHistory.length > REGISTER_READY_VOTES_REQUIRED) {
+                                                registerReadyHistory.shift();
+                                            }
+                                            
+                                            // Check if we have enough votes
+                                            if (registerReadyHistory.length >= REGISTER_READY_VOTES_REQUIRED && 
+                                                registerReadyHistory.every(v => v === true)) {
+                                                // Stable ready state - store this frame as best
+                                                registerBestFrameBlob = blob;
+                                                // Auto capture setelah delay kecil untuk memastikan frame stabil
+                                                setTimeout(() => {
+                                                    if (registerBestFrameBlob && !registerPhotoCaptured) {
+                                                        updateRegisterStatus('✅ Foto siap - Mengambil foto...');
+                                                        autoCaptureRegisterPhoto(registerBestFrameBlob);
+                                                    }
+                                                }, 300); // Delay 300ms untuk memastikan frame benar-benar stabil
+                                            } else {
+                                                // Store current frame sebagai candidate jika belum ada
+                                                if (!registerBestFrameBlob) {
+                                                    registerBestFrameBlob = blob;
+                                                }
+                                                updateRegisterStatus(`Kualitas baik - Memeriksa stabilitas... (${registerReadyHistory.length}/${REGISTER_READY_VOTES_REQUIRED})`);
+                                            }
+                                        } else {
+                                            // Reset voting history jika liveness belum pass
+                                            registerReadyHistory = [];
+                                            
+                                            // Show liveness progress
+                                            let progressMsg = 'Kualitas baik - ';
+                                            if (!registerMotionDetected && !registerBlinkDetected) {
+                                                progressMsg += 'Gerakkan kepala dan kedipkan mata';
+                                            } else if (!registerMotionDetected) {
+                                                progressMsg += 'Gerakkan kepala';
+                                            } else if (!registerBlinkDetected) {
+                                                progressMsg += 'Kedipkan mata';
+                                            }
+                                            updateRegisterStatus(progressMsg);
+                                        }
+                                    } else {
+                                        // QC failed - reset voting history dan best frame
+                                        registerReadyHistory = [];
+                                        registerBestFrameBlob = null;
+                                        updateRegisterStatus('Wajah terdeteksi - ' + (qcData.user_message || 'Memeriksa kualitas...'));
+                                    }
+                                }
+                            } else {
+                                // No face detected - update temporal smoothing
+                                if ((Date.now() - lastRegisterFaceTime) >= REGISTER_FACE_TIMEOUT) {
+                                    lastRegisterFaceData = null;
+                                    updateRegisterStatus('Mencari wajah...');
+                                }
+                                // Don't clear immediately - let temporal smoothing handle it
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Error checking QC:', err);
+                    }
+                }, 'image/jpeg', 0.7);
+            } catch (err) {
+                console.error('Error in checkRegisterFrameQC:', err);
+            }
+        }
+        
+        function updateLivenessDetection(faceData) {
+            const bbox = faceData.bbox;
+            const centerX = (bbox[0] + bbox[2]) / 2;
+            const centerY = (bbox[1] + bbox[3]) / 2;
+            
+            // Motion Detection: Track face center position
+            registerFaceHistory.push({ x: centerX, y: centerY, time: Date.now() });
+            if (registerFaceHistory.length > REGISTER_FACE_HISTORY_MAX) {
+                registerFaceHistory.shift();
+            }
+            
+            if (registerFaceHistory.length >= 3) {
+                // Calculate variance in position
+                const positions = registerFaceHistory.slice(-5); // Last 5 positions
+                const xs = positions.map(p => p.x);
+                const ys = positions.map(p => p.y);
+                const meanX = xs.reduce((a, b) => a + b, 0) / xs.length;
+                const meanY = ys.reduce((a, b) => a + b, 0) / ys.length;
+                const varianceX = xs.reduce((sum, x) => sum + Math.pow(x - meanX, 2), 0) / xs.length;
+                const varianceY = ys.reduce((sum, y) => sum + Math.pow(y - meanY, 2), 0) / ys.length;
+                const totalVariance = Math.sqrt(varianceX + varianceY);
+                
+                if (totalVariance > REGISTER_MOTION_THRESHOLD) {
+                    registerMotionDetected = true;
+                }
+            }
+            
+            // Blink Detection: Simplified approach
+            // Track face detection confidence variation as proxy for blink
+            // When eyes blink, detection confidence may slightly drop
+            registerBlinkHistory.push({
+                confidence: faceData.confidence || 0.9,
+                time: Date.now()
+            });
+            
+            if (registerBlinkHistory.length > REGISTER_FACE_HISTORY_MAX) {
+                registerBlinkHistory.shift();
+            }
+            
+            // Detect blink: look for confidence drops (simulating eye closure)
+            if (registerBlinkHistory.length >= 5 && !registerBlinkDetected) {
+                const confidences = registerBlinkHistory.map(h => h.confidence);
+                const maxConf = Math.max(...confidences);
+                const minConf = Math.min(...confidences);
+                const confRange = maxConf - minConf;
+                
+                // If confidence varies significantly, it might indicate blinking
+                // Also require motion to be detected first
+                if (registerMotionDetected && confRange > 0.05) {
+                    registerBlinkDetected = true;
+                }
+            }
+            
+            // Alternative: If motion detected for sufficient time, assume liveness
+            // (This is a fallback if blink detection doesn't trigger)
+            if (registerMotionDetected && registerFaceHistory.length >= 8 && !registerBlinkDetected) {
+                // After enough motion frames, consider it live even without explicit blink
+                registerBlinkDetected = true;
+            }
+        }
+        
+        // Draw face box untuk register - sama persis dengan home
+        function drawRegisterFaceBox(faceData, video, overlay) {
+            if (!overlay || !video) return;
+            
+            const ctx = overlay.getContext('2d');
+            const videoRect = video.getBoundingClientRect();
+            const scaleX = overlay.width / video.videoWidth;
+            const scaleY = overlay.height / video.videoHeight;
+            
+            // Clear previous drawing
+            ctx.clearRect(0, 0, overlay.width, overlay.height);
+            
+            // Calculate box position
+            const x = faceData.bbox[0] * scaleX;
+            const y = faceData.bbox[1] * scaleY;
+            const width = (faceData.bbox[2] - faceData.bbox[0]) * scaleX;
+            const height = (faceData.bbox[3] - faceData.bbox[1]) * scaleY;
+            
+            // Draw face box
+            ctx.strokeStyle = '#48bb78';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = 'rgba(72, 187, 120, 0.5)';
+            ctx.beginPath();
+            ctx.roundRect(x, y, width, height, 12);
+            ctx.stroke();
+            
+            // Draw label
+            ctx.fillStyle = 'rgba(72, 187, 120, 0.95)';
+            ctx.shadowBlur = 0;
+            const labelText = 'Wajah Terdeteksi';
+            ctx.font = '600 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+            const labelWidth = ctx.measureText(labelText).width + 24;
+            const labelHeight = 28;
+            const labelX = Math.max(0, Math.min(x, overlay.width - labelWidth));
+            const labelY = Math.max(labelHeight, y - 8);
+            
+            // Draw rounded rectangle for label
+            ctx.beginPath();
+            ctx.roundRect(labelX, labelY - labelHeight, labelWidth, labelHeight, 8);
+            ctx.fill();
+            
+            // Draw text
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(labelText, labelX + 12, labelY - labelHeight / 2);
+        }
+        
+        function clearRegisterFaceBox(overlay) {
+            if (!overlay) {
+                overlay = document.getElementById('registerFaceOverlay');
+            }
+            if (overlay) {
+                const ctx = overlay.getContext('2d');
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
+            }
+        }
+        
+        function validateNIM() {
+            const nimInput = document.getElementById('registerNIMInput');
+            const nim = nimInput.value.trim();
+            
+            if (!nim) {
+                updateRegisterStatus('❌ Silakan masukkan NIM', 'error');
+                setRegisterState(RegisterState.ERROR);
+                return false;
+            }
+            
+            // Validate format: 8-15 digits
+            if (!/^\d{8,15}$/.test(nim)) {
+                updateRegisterStatus('❌ Format NIM tidak valid (harus 8-15 digit)', 'error');
+                setRegisterState(RegisterState.ERROR);
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function autoCaptureRegisterPhoto(bestFrameBlob = null) {
+            // Prevent multiple captures
+            if (registerPhotoCaptured) return;
+            
+            // Mark as captured immediately to prevent race condition
+            registerPhotoCaptured = true;
+            
+            // Use best frame jika tersedia, atau capture dari video
+            if (bestFrameBlob || registerBestFrameBlob) {
+                const blobToUse = bestFrameBlob || registerBestFrameBlob;
+                registerPhotoBlob = blobToUse;
+                registerPhotoFile = null;
+                
+                // Stop auto-capture loop
+                if (registerQCCheckLoop) {
+                    cancelAnimationFrame(registerQCCheckLoop);
+                    registerQCCheckLoop = null;
+                }
+                
+                // Set state to captured
+                setRegisterState(RegisterState.CAPTURED);
+                
+                // Show modal dengan preview foto
+                showRegisterModal(blobToUse);
+                
+                // Reset best frame
+                registerBestFrameBlob = null;
+                return;
+            }
+            
+            // Fallback: capture dari video langsung
+            const registerVideo = document.getElementById('registerVideo');
+            const registerCanvas = document.getElementById('registerCanvas');
+            
+            if (!registerVideo || !registerVideo.videoWidth || !registerVideo.videoHeight) {
+                registerPhotoCaptured = false; // Reset if failed
+                return;
+            }
+            
+            try {
+                const ctx = registerCanvas.getContext('2d');
+                registerCanvas.width = registerVideo.videoWidth;
+                registerCanvas.height = registerVideo.videoHeight;
+                ctx.drawImage(registerVideo, 0, 0);
+                
+                // Use high quality untuk foto yang bagus untuk face recognition
+                registerCanvas.toBlob(blob => {
+                    if (blob) {
+                        registerPhotoBlob = blob;
+                        registerPhotoFile = null;
+                        
+                        // Stop auto-capture loop
+                        if (registerQCCheckLoop) {
+                            cancelAnimationFrame(registerQCCheckLoop);
+                            registerQCCheckLoop = null;
+                        }
+                        
+                        // Update button
+                        // Show modal dengan preview foto
+                        showRegisterModal(blob);
+                    } else {
+                        registerPhotoCaptured = false; // Reset if failed
+                        updateRegisterStatus('❌ Gagal mengambil foto');
+                    }
+                }, 'image/jpeg', 0.95); // High quality (0.95) untuk foto yang bagus
+            } catch (err) {
+                console.error('Error auto-capturing photo:', err);
+                registerPhotoCaptured = false; // Reset if failed
+                updateRegisterStatus('❌ Gagal mengambil foto');
+            }
+        }
+        
+        function updateRegisterStatus(message, severity = null) {
+            const statusInfo = document.getElementById('registerStatusInfo');
+            if (statusInfo) {
+                statusInfo.textContent = message;
+                
+                // Map severity to color (if provided), otherwise use emoji-based detection
+                if (severity === 'error' || message.includes('❌')) {
+                    statusInfo.style.background = 'rgba(245, 101, 101, 0.1)';
+                    statusInfo.style.color = '#f56565';
+                } else if (severity === 'warning' || message.includes('⚠️')) {
+                    statusInfo.style.background = 'rgba(237, 137, 54, 0.1)';
+                    statusInfo.style.color = '#ed8936';
+                } else if (severity === 'info' || message.includes('✅')) {
+                    statusInfo.style.background = 'rgba(102, 126, 234, 0.1)';
+                    statusInfo.style.color = '#667eea';
+                } else if (message.includes('✅')) {
+                    statusInfo.style.background = 'rgba(72, 187, 120, 0.1)';
+                    statusInfo.style.color = '#48bb78';
+                } else {
+                    statusInfo.style.background = 'rgba(102, 126, 234, 0.1)';
+                    statusInfo.style.color = '#667eea';
+                }
+            }
+        }
+        
+        function uploadPhotoForRegister(event) {
+            // Validate NIM first
+            if (!validateNIM()) {
+                event.target.value = ''; // Clear file input
+                return;
+            }
+            
+            const file = event.target.files[0];
+            if (file) {
+                // Reset all state
+                registerPhotoFile = file;
+                registerPhotoBlob = null;
+                registerPhotoCaptured = true; // Mark as captured
+                registerBestFrameBlob = null;
+                registerReadyHistory = [];
+                
+                setRegisterState(RegisterState.CAPTURED);
+                showRegisterModal(file);
+                updateRegisterStatus('✅ Foto siap - Klik Simpan ke Database');
+            }
+        }
+        
+        function showRegisterModal(source) {
+            const overlay = document.getElementById('registerModalOverlay');
+            const img = document.getElementById('registerModalImg');
+            
+            if (!overlay || !img) return;
+            
+            // Create object URL dari blob atau file
+            if (source instanceof File) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    img.src = e.target.result;
+                    overlay.classList.add('active');
+                };
+                reader.readAsDataURL(source);
+            } else if (source instanceof Blob) {
+                const url = URL.createObjectURL(source);
+                img.src = url;
+                overlay.classList.add('active');
+            } else if (typeof source === 'string') {
+                img.src = source;
+                overlay.classList.add('active');
+            }
+        }
+        
+        function closeRegisterModal() {
+            const overlay = document.getElementById('registerModalOverlay');
+            if (overlay) {
+                overlay.classList.remove('active');
+                
+                // Cleanup object URL jika ada
+                const img = document.getElementById('registerModalImg');
+                if (img && img.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(img.src);
+                }
+            }
+        }
+        
+        function closeRegisterModalOutside(event) {
+            if (event.target.id === 'registerModalOverlay') {
+                closeRegisterModal();
+            }
+        }
+        
+        function retryRegisterCapture() {
+            // Close modal
+            closeRegisterModal();
+            
+            // Reset state
+            registerPhotoCaptured = false;
+            registerPhotoBlob = null;
+            registerPhotoFile = null;
+            registerBestFrameBlob = null;
+            registerReadyHistory = [];
+            
+            // Clear face overlay
+            clearRegisterFaceBox();
+            lastRegisterFaceData = null;
+            lastRegisterFaceTime = 0;
+            
+            // Set state back to idle
+            setRegisterState(RegisterState.IDLE);
+            
+            // Update status
+            updateRegisterStatus('Siap untuk capture ulang');
+        }
+        
+        function saveRegisterPhoto() {
+            // Close modal first
+            closeRegisterModal();
+            
+            // Call existing registerPhoto function
+            registerPhoto();
+        }
+        
+        // Legacy function untuk backward compatibility (redirect ke modal)
+        function previewRegisterPhoto(source) {
+            showRegisterModal(source);
+        }
+        
+        async function registerPhoto() {
+            // Validate NIM
+            if (!validateNIM()) {
+                return;
+            }
+            
+            // Check if already saving
+            if (registerState === RegisterState.SAVING) {
+                return; // Prevent double submit
+            }
+            
+            const nimInput = document.getElementById('registerNIMInput');
+            const nim = nimInput.value.trim();
+            const statusDiv = document.getElementById('registerStatus');
+            const btnSave = document.getElementById('btnSaveRegister');
+            
+            statusDiv.style.display = 'none';
+            
+            if (!registerPhotoBlob && !registerPhotoFile) {
+                statusDiv.textContent = 'Silakan ambil atau upload foto terlebih dahulu';
+                statusDiv.className = 'status-message error';
+                statusDiv.style.display = 'block';
+                setRegisterState(RegisterState.ERROR);
+                return;
+            }
+            
+            // Set state to saving
+            setRegisterState(RegisterState.SAVING);
+            
+            if (btnSave) {
+                btnSave.disabled = true;
+                btnSave.textContent = '⏳ Menyimpan...';
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('nim', nim);
+                
+                if (registerPhotoFile) {
+                    formData.append('image', registerPhotoFile);
+                } else if (registerPhotoBlob) {
+                    formData.append('image', registerPhotoBlob, 'photo.jpg');
+                }
+                
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    setRegisterState(RegisterState.SUCCESS);
+                    
+                    statusDiv.textContent = `✅ Berhasil! Foto mahasiswa dengan NIM ${nim} telah diregistrasi`;
+                    statusDiv.className = 'status-message success';
+                    statusDiv.style.display = 'block';
+                    
+                    // Update status info
+                    updateRegisterStatus(`✅ Foto NIM ${nim} berhasil disimpan`);
+                    
+                    // Reset form dan state
+                    nimInput.value = '';
+                    registerPhotoBlob = null;
+                    registerPhotoFile = null;
+                    registerPhotoCaptured = false;
+                    registerBestFrameBlob = null;
+                    registerReadyHistory = [];
+                    document.getElementById('registerFileInput').value = '';
+                    
+                    // Clear face overlay
+                    clearRegisterFaceBox();
+                    lastRegisterFaceData = null;
+                    lastRegisterFaceTime = 0;
+                    
+                    // Reset to idle after 2 seconds
+                    setTimeout(() => {
+                        setRegisterState(RegisterState.IDLE);
+                    }, 2000);
+                } else {
+                    setRegisterState(RegisterState.ERROR);
+                    statusDiv.textContent = data.message || data.error || 'Gagal menyimpan foto';
+                    statusDiv.className = 'status-message error';
+                    statusDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error registering photo:', error);
+                setRegisterState(RegisterState.ERROR);
+                statusDiv.textContent = 'Terjadi kesalahan saat menyimpan foto: ' + error.message;
+                statusDiv.className = 'status-message error';
+                statusDiv.style.display = 'block';
+            } finally {
+                if (btnSave) {
+                    btnSave.disabled = false;
+                    btnSave.textContent = '💾 Simpan ke Database';
+                }
+            }
+        }
+        
+        // ==================== ADMIN PAGE FUNCTIONS ====================
+        async function deleteNIM() {
+            const nimInput = document.getElementById('adminNIMInput');
+            const statusDiv = document.getElementById('adminStatus');
+            const btnDelete = document.getElementById('btnDeleteNIM');
+            
+            const nim = nimInput.value.trim();
+            
+            // Validate NIM
+            if (!nim) {
+                statusDiv.textContent = '❌ Silakan masukkan NIM';
+                statusDiv.className = 'status-message error';
+                statusDiv.style.display = 'block';
+                return;
+            }
+            
+            // Validate NIM format (8-15 digits)
+            if (!/^\d{8,15}$/.test(nim)) {
+                statusDiv.textContent = '❌ Format NIM tidak valid (harus 8-15 digit)';
+                statusDiv.className = 'status-message error';
+                statusDiv.style.display = 'block';
+                return;
+            }
+            
+            // Confirm deletion
+            if (!confirm(`Apakah Anda yakin ingin menghapus NIM ${nim} dari database?\n\nTindakan ini tidak dapat dibatalkan!`)) {
+                return;
+            }
+            
+            // Disable button
+            if (btnDelete) {
+                btnDelete.disabled = true;
+                btnDelete.textContent = '⏳ Menghapus...';
+            }
+            
+            statusDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/admin/delete-nim', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nim: nim })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusDiv.textContent = `✅ ${data.message || `NIM ${nim} berhasil dihapus dari database`}`;
+                    statusDiv.className = 'status-message success';
+                    statusDiv.style.display = 'block';
+                    
+                    // Clear input
+                    nimInput.value = '';
+                } else {
+                    statusDiv.textContent = `❌ ${data.error || data.message || 'Gagal menghapus NIM'}`;
+                    statusDiv.className = 'status-message error';
+                    statusDiv.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error deleting NIM:', error);
+                statusDiv.textContent = '❌ Terjadi kesalahan saat menghapus NIM: ' + error.message;
+                statusDiv.className = 'status-message error';
+                statusDiv.style.display = 'block';
+            } finally {
+                if (btnDelete) {
+                    btnDelete.disabled = false;
+                    btnDelete.textContent = '🗑️ Hapus NIM dari Database';
+                }
+            }
+        }
     </script>
 </body>
 </html>
 """
+
+@app.route('/api/admin/delete-nim', methods=['POST'])
+def delete_nim():
+    """Delete NIM from database."""
+    try:
+        init_components()
+        
+        # Get NIM from request
+        if not request.is_json:
+            return jsonify({
+                'success': False,
+                'error': 'Request must be JSON'
+            }), 400
+        
+        data = request.json
+        nim = data.get('nim', '').strip()
+        
+        # Validate NIM format
+        if not nim:
+            return jsonify({
+                'success': False,
+                'error': 'NIM tidak boleh kosong'
+            }), 400
+        
+        # Validate NIM format (8-15 digits)
+        import re
+        if not re.match(r'^\d{8,15}$', nim):
+            return jsonify({
+                'success': False,
+                'error': 'Format NIM tidak valid (harus 8-15 digit)'
+            }), 400
+        
+        # Check if NIM exists
+        from face_recognition.database import FaceDatabase
+        db = FaceDatabase()
+        
+        # Check if exists
+        embedding = db.get_embedding(nim)
+        if embedding is None:
+            return jsonify({
+                'success': False,
+                'error': f'NIM {nim} tidak ditemukan di database'
+            }), 404
+        
+        # Delete NIM
+        success = db.delete_embedding(nim)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'NIM {nim} berhasil dihapus dari database'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Gagal menghapus NIM dari database'
+            }), 500
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/')
 def index():
